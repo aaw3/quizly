@@ -10,6 +10,7 @@ from yaml import safe_load
 import os
 import asyncio
 import time
+from ai import *
 
 # Constants for game status
 STATUS_WAITING = "waiting"
@@ -112,6 +113,9 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 questions_answered = game_data["players"][player_name]["questions_answered"]
 
                 question = await get_random_question(game_data, questions_answered)
+                answer = question.get("correct", "")
+                # Don't send correct answer to player
+                del question["correct"]
                 if not question:
                     await websocket.send_text("You've answered all the questions!")
                     break
@@ -120,19 +124,30 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 logging.info(f"Sent question to player '{player_name}': {question}")
 
                 try:
-                    # Create loop waiting for input, in paused state nothing happens
-                    # If user sends an input after pause ends, we grab game_data so it can be processed on resume
-                    while True:
-                        answer = await websocket.receive_text()
-                        game_data = get_game_data(client, game_code)
-                        if game_data["status"] != STATUS_STARTED:
-                            continue
-                        else:
+                    for attempt in range(2):
+                        # Create loop waiting for input, in paused state nothing happens
+                        # If user sends an input after pause ends, we grab game_data so it can be processed on resume
+                        while True:
+                            answer = await websocket.receive_text()
+                            game_data = get_game_data(client, game_code)
+                            if game_data["status"] != STATUS_STARTED:
+                                continue
+                            else:
+                                break
+                        # First answer
+                        if check_answer(question, answer):
+                            pts = 1000
+                            await websocket.send_text(f"Correct! You earned {pts/(attempt + 1)} points.")
                             break
-                    if check_answer(question, answer):
-                        await websocket.send_text("Correct!")
-                    else:
-                        await websocket.send_text("Incorrect!")
+                        else:
+                            await websocket.send_text("Incorrect!")
+                            if attempt == 1:
+                                await websocket.send_text(f"The correct answer was: {answer}")
+                                break
+
+                        # Get help from AI:
+                        ai_response = get_ai_help(answer, answer, question["question"])
+                        await websocket.send_text(ai_response)
                 except WebSocketDisconnect:
                     logging.info(f"Player '{player_name}' disconnected while answering questions.")
                     break
@@ -169,7 +184,7 @@ async def get_random_question(game_data, questions_answered):
     available_questions = [q for q in questions if q["question"] not in questions_answered]
     if available_questions:
         question = random.choice(available_questions)
-        question.pop("correct", None)
+        #question.pop("correct", None)
         return question
     return None
 
