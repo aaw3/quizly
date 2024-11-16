@@ -90,24 +90,6 @@ const JoinGame = () => {
                 </p>
               </div>
             </div>
-
-            {/* Decorative Box */}
-            <div className="bg-gray-100 shadow-lg rounded-xl px-8 py-6 w-full max-w-lg mt-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                Game Details
-              </h3>
-              <ul className="text-lg text-gray-700 space-y-2">
-                <li>
-                  <strong>Player:</strong> {gameData.player_name}
-                </li>
-                <li>
-                  <strong>Code:</strong> {gameData.game_code}
-                </li>
-                <li>
-                  <strong>Status:</strong> Waiting for players...
-                </li>
-              </ul>
-            </div>
           </>
         )}
       </div>
