@@ -20,7 +20,7 @@ const Hero = () => {
         {/* Buttons */}
         <div className="flex flex-wrap justify-center gap-4">
           <Link
-            to="/"
+            to="/joingame"
             className="px-8 py-3 text-lg font-medium rounded-lg bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition duration-200"
           >
             Join Game
