@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import redis
 import uuid
@@ -22,6 +23,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True
 
 client = redis.Redis("redis", port=6379, db=0)
 id_to_websocket = {}
+active_hosts = {}
 
 
 # Create Game
@@ -30,7 +32,7 @@ async def create_game():
     game_code = generate_game_code()
     questions = load_questions()
     if not questions:
-        return {"message": "Error loading quiz file"}
+        return JSONResponse(content={"message": "Error loading quiz file"}, status_code=500)
 
     game_data = init_game_data(game_code, questions)
     client.set(f"game:{game_code}", json.dumps(game_data))
@@ -42,9 +44,18 @@ async def create_game():
 async def join_game(game_code: str, player_name: str):
     game_data = get_game_data(client, game_code)
     if not game_data:
-        return {"message": "Game not found"}
+        return JSONResponse(content={"message": "Game not found"}, status_code=404)
+    # If player is actively in game
+    if player_name in game_data["players"] and game_data["players"][player_name]["connected"]:
+        return {"message": "Player name already exists in game"}
 
-    player_data = register_player(game_data, player_name)
+    # If player is in game but got disconnected
+    if player_name in game_data["players"] and not game_data["players"][player_name]["connected"]:
+        return {"message": "Player reconnected"}
+    
+    game_data = get_game_data(client, game_code)
+    # If player is new to game    
+    player_data = register_player(game_data, player_name, game_data["questions"])
     client.set(f"game:{game_code}", json.dumps(game_data))
     logging.info(f"Player '{player_name}' added to game '{game_code}'. Updated game data: {game_data}")
     logging.error("GAME INFO:", str(game_data))
@@ -56,33 +67,73 @@ async def join_game(game_code: str, player_name: str):
 @app.websocket("/ws/game/{game_code}/{player_name}")
 async def game_websocket(websocket: WebSocket, game_code: str, player_name: str):
     await websocket.accept()
-    logging.info(f"WebSocket connection established for player '{player_name}' in game '{game_code}'")
+    try:
+        logging.info(f"WebSocket connection established for player '{player_name}' in game '{game_code}'")
 
-    game_data = get_game_data(client, game_code)
-    if not await validate_player(game_data, player_name, websocket):
-        return
+        game_data = get_game_data(client, game_code)
+        if (not await validate_player(game_data, player_name, websocket)
+            or not game_data
+            or game_data["players"][player_name]["websocket_id"] is not None):
+            return
 
-    id_to_websocket[game_data["players"][player_name]["id"]] = websocket
-    client.set(f"game:{game_code}", json.dumps(game_data))
+        # Mutex for player connection
+        websocket_id = str(uuid.uuid4())
+        game_data["players"][player_name]["websocket_id"] = websocket_id
 
-    # Handle game start and question/answer flow
-    await wait_for_game_start(websocket, game_code)
-    await manage_game_session(websocket, client, game_code, player_name)
+        id_to_websocket[game_data["players"][player_name]["id"]] = websocket
+        game_data["players"][player_name]["connected"] = True
+        client.set(f"game:{game_code}", json.dumps(game_data))
+
+        # Handle game start and question/answer flow
+        await wait_for_game_start(websocket, game_code)
+        await manage_game_session(websocket, client, game_code, player_name)
+    except WebSocketDisconnect:
+        logging.info(f"Player '{player_name}' disconnected")
+    except Exception as e:
+        logging.error(f"Error in Player '{player_name}' websocket: {e}")
+    finally:
+        game_data = get_game_data(client, game_code)
+        # Only set player as disconnected if they match the mutex
+        if game_data and game_data["players"][player_name]["websocket_id"] == websocket_id:
+            game_data["players"][player_name]["websocket_id"] = None
+            client.set(f"game:{game_code}", json.dumps(game_data))
+            logging.info(f"Player '{player_name}' disconnected in game '{game_code}'")
 
 
 # WebSocket for Host
 @app.websocket("/ws/host/{game_code}")
 async def host_websocket(websocket: WebSocket, game_code: str):
     await websocket.accept()
-    logging.info("Host joined")
 
-    game_data = get_game_data(client, game_code)
-    if not game_data:
-        await websocket.send_text("Game not found")
-        await websocket.close()
-        return
+    # Get this logic working when come back. Basically uses uuid as a mutex
+    websocket_id = str(uuid.uuid4())
 
-    await handle_host_commands(websocket, client, game_data)
+    try:
+        logging.info("Host joined")
+
+        game_data = get_game_data(client, game_code)
+        if not game_data:
+            await websocket.send_text("Game not found")
+            await websocket.close()
+            return
+
+        if game_code in active_hosts:
+            await websocket.send_text("Host already connected")
+            await websocket.close()
+            return
+
+        active_hosts[game_code] = websocket_id
+
+        await handle_host_commands(websocket, client, game_data)
+    except WebSocketDisconnect:
+        logging.info("Host disconnected")
+    except Exception as e:
+        logging.error(f"Error in host websocket: {e}")
+    finally:
+        if game_code in active_hosts and active_hosts[game_code] == websocket_id:
+            del active_hosts[game_code]
+            logging.info("Host cleaned up")
+        
 
 
 # WebSocket for Metrics
