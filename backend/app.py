@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 import redis
 import uuid
 import asyncio
@@ -11,6 +12,14 @@ from yaml import safe_load, YAMLError
 import time
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:5173" # This one is essential
+]
+
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
 client = redis.Redis("redis", port=6379, db=0)
 id_to_websocket = {}
 
