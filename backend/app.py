@@ -2,8 +2,13 @@ from fastapi import FastAPI, WebSocket
 import redis
 import uuid
 import asyncio
-from helper import get_random_question, check_answer, get_hint, update_score, handle_disconnect, get_game_metrics
-
+from helper import *
+import json
+import random
+import os
+from yaml import safe_load, YAMLError
+import time
+import logging
 
 # Objective: Create a quizlet/kahoot like game where users can join a game and answer questions.
 # Create game will create a game code and store it in the redis database
@@ -21,51 +26,83 @@ from helper import get_random_question, check_answer, get_hint, update_score, ha
 
 app = FastAPI()
 
-redis = await redis
+client = redis.Redis("redis", port=6379, db=0)
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Message text was: {data}")
-
+id_to_websocket = {}
 
 # Create a creategame endpoint
 @app.post("/creategame")
 async def create_game():
-    game_code = str(uuid.uuid4())[:8]
+    game_code = str(uuid.uuid4())[:5].upper()
+    quiz_source = random.choice(os.listdir("quizzes"))
+    yaml = None
+    try:
+        with open(f"quizzes/{quiz_source}", "r") as file:
+            quiz_yml = safe_load(file)
+    except YAMLError as exc:
+        logging.info("Unable to load yaml file", exc)
+
+    except FileNotFoundError:
+        logging.info("Quiz file not found")
+
+    
+    if quiz_yml is None:
+        return {"message": "Error loading quiz file"}
+
+    questions = quiz_yml["questions"]
     game_data = {
         "code": game_code,
-        "players": [],
+        "players": {},
         "status": "waiting",
-        "questions": [],
+        "questions": questions,
         "start_time": None
     }
 
-    await redis.set(f"game:{game_code}", game_data)
+    client.set(f"game:{game_code}", json.dumps(game_data))
     return {"game_code": game_code, "message": "Game created successfully"}
 
 @app.post("/joingame/{game_code}")
 async def join_game(game_code: str, player_name: str):
-    game_data = await redis.get(f"game:{game_code}")
-    if not game_data:
+    game_data_bytes = client.get(f"game:{game_code}")
+    if game_data_bytes is None:
         return {"message": "Game not found"}
 
+    game_data = json.loads(game_data_bytes)
+
+    # Player name is the key to map the player for now
     player_data = {
-        "name": player_name,
-        "score": 0,
-        "answered_correctly": False
+            "id": str(uuid.uuid4()),
+            "score": 0
     }
 
-    game_data["players"].append(player_data)
-    await redis.set(f"game:{game_code}", game_data)
+    game_data["players"][player_name] = player_data
+    client.set(f"game:{game_code}", json.dumps(game_data))
 
     return {"message": "Joined game", "game_code": game_code, "player_name": player_name}
 
 @app.websocket("/ws/game/{game_code}/{player_name}")
 async def game_websocket(websocket: WebSocket, game_code: str, player_name: str):
     await websocket.accept()
+    game_data_bytes = client.get(f"game:{game_code}")
+    if game_data_bytes is None:
+        await websocket.send_text("Game not found")
+        websocket.close()
+    
+    game_data = json.loads(game_data_bytes)
+    # Check if the player is in the game
+    logging.info("PLAYERS:", game_data["players"])
+    if player_name not in game_data["players"]:
+        await websocket.send_text("You are not a part of this game")
+        websocket.close()
+
+    id_to_websocket[game_data["players"][player_name]["id"]] = websocket
+    client.set(f"game:{game_code}", json.dumps(game_data))
+
+    await websocket.send_text("Waiting for game to start")
+
+    while game_data["status"] == "waiting":
+        await asyncio.sleep(0.5)
+
     try:
         while True:
             question = await get_random_question(game_code)
@@ -95,6 +132,40 @@ async def game_websocket(websocket: WebSocket, game_code: str, player_name: str)
         await handle_disconnect(game_code, player_name)
 
 
+@app.websocket("/ws/host/{game_code}")
+async def host_websocket(websocket: WebSocket, game_code: str):
+    await websocket.accept()
+    logging.info("Host joined")
+    game_data_bytes = client.get(f"game:{game_code}")
+    if game_data_bytes is None:
+        await websocket.send_text("Game not found")
+        return
+
+    # wait until start is received from the host in the socket
+    await websocket.send_text("Type 'start' to start the game")
+
+    while True:
+        start_command = await websocket.receive_text()
+        if start_command.lower() == "start":
+            logging.info("Start received, starting game")
+            break
+        else:
+            logging.info(f"Received invalid command from host: {start_command}")
+            await websocket.send_text("Invalid command. Type 'start' to start the game")
+
+    game_data = json.loads(game_data_bytes)
+    game_data["start_time"] = time.time()
+    client.set(f"game:{game_code}", json.dumps(game_data))
+    await broadcast(id_to_websocket, client, game_data["code"], "Starting game")
+
+    logging.info("Broadcast successful")
+
+    try:
+        while True:
+            pass
+    except WebSocketDisconnect:
+        pass
+
 @app.websocket("/ws/metrics/{game_code}")
 async def metrics_websocket(websocket: WebSocket, game_code: str):
     await websocket.accept()
@@ -104,4 +175,4 @@ async def metrics_websocket(websocket: WebSocket, game_code: str):
             await websocket.send_json(metrics)
             await asyncio.sleep(1)
     except WebSocketDisconnect:
-        print("Game-starter disconnected from metrics")
+        logging.info("Game-starter disconnected from metrics")

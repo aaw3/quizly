@@ -1,4 +1,6 @@
 fastapi
 fastapi[standard]
 uvicorn[standard]
-aioredis
+redis
+asyncio
+PyYAML
