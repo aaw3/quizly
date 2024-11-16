@@ -18,10 +18,16 @@ const Header: React.FC = () => {
           )}
         </div>
         <div className="flex items-center space-x-4">
-          <Link to="/" className="text-white  transition duration-200">
+          <Link
+            to="/"
+            className="underline underline-offset-2 text-white  transition duration-200"
+          >
             About
           </Link>
-          <Link to="/" className="text-white  transition duration-200">
+          <Link
+            to="/"
+            className="underline underline-offset-2 text-white  transition duration-200"
+          >
             Your Games
           </Link>
           <div className="w-10 h-10 rounded-full bg-gray-300"></div>
