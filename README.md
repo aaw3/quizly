@@ -58,3 +58,8 @@ Welcome to **Quizly**, the ultimate AI-powered quiz platform! 🧠 Challenge you
 - Python
 - Redis
   
+---
+
+## 🙌 Acknowledgments
+Quizly was built by Liam Stamper and Allen Wolf [(GitHub:aaw3)](https://github.com/aaw3) during the Iowa State University Hackathon. 🎉
+Thank you to everyone at Iowa State for hosting the event.
