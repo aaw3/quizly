@@ -1,9 +1,13 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
+import ContextMenu from "./ContextMenu";
 
 const Header: React.FC = () => {
   const location = useLocation();
+  const handleLogout = () => {
+    console.log("User logged out");
+  };
   return (
     <header className="bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md">
       <div className="container mx-auto flex justify-between items-center py-3 px-6 lg:px-10">
@@ -43,22 +47,7 @@ const Header: React.FC = () => {
 
         {/* Mobile Menu Icon */}
         <div className="sm:hidden">
-          <button className="text-white focus:outline-none">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16m-7 6h7"
-              />
-            </svg>
-          </button>
+          <ContextMenu onLogout={handleLogout} />
         </div>
       </div>
     </header>
