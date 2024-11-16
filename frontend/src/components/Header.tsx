@@ -31,7 +31,7 @@ const Header: React.FC = () => {
             About
           </Link>
           <Link
-            to="/yourgames"
+            to="/"
             className="text-base hover:underline underline-offset-4 transition duration-200"
           >
             Your Games
