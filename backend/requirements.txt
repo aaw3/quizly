@@ -5,3 +5,4 @@ redis
 asyncio
 PyYAML
 groq
+requests

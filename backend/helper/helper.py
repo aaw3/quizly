@@ -305,7 +305,7 @@ def get_players_metrics(players_data: dict):
 
 
 def validate_answer(answer, question_options):
-    if answer is None or answer is "":
+    if answer is None or answer == "":
         return None
     # Get the casing of the answer:
     keys = question_options.keys()
