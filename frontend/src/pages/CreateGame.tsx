@@ -1,34 +1,151 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
 import Header from "../components/Header";
+import { IoCopy } from "react-icons/io5";
+
 const CreateGame = () => {
+  const [gameCode, setGameCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [players, setPlayers] = useState<string[]>([]);
+  const [copied, setCopied] = useState(false);
+
+  const createGame = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.post("http://localhost:8000/creategame");
+      const data = response.data;
+
+      if (data.game_code) {
+        setGameCode(data.game_code);
+      } else {
+        console.error(data.message || "Error creating game");
+      }
+    } catch (error) {
+      console.error("Failed to create game:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (gameCode) {
+      navigator.clipboard.writeText(gameCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000); // Reset after 2 seconds
+    }
+  };
+
+  // Fetch players periodically
+  useEffect(() => {
+    if (gameCode) {
+      const interval = setInterval(async () => {
+        try {
+          const response = await axios.get(
+            `http://localhost:8000/game/${gameCode}/players`
+          );
+          setPlayers(response.data.players || []);
+        } catch (error) {
+          console.error("Failed to fetch players:", error);
+        }
+      }, 3000); // Fetch every 3 seconds
+
+      return () => clearInterval(interval); // Cleanup interval on component unmount
+    }
+  }, [gameCode]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen pb-72">
+    <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen pb-[340px]">
       <Header />
       <div className="container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-4xl">
-        {/* Page Title */}
-        <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
-          Create a <span className="text-blue-600">Game</span>
-        </h1>
-        <p className="px-6 mt-6 mb-12 text-lg text-gray-700 sm:px-12 lg:px-20">
-          Use AI to create custom quizzes and start a new game for your friends
-          or students.
-        </p>
+        {!gameCode ? (
+          <>
+            {/* Page Title */}
+            <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
+              Create a <span className="text-blue-600">Game</span>
+            </h1>
+            <p className="px-6 mt-6 mb-12 text-lg text-gray-700 sm:px-12 lg:px-20">
+              Use AI to create custom quizzes and start a new game for your
+              friends or students.
+            </p>
 
-        {/* Form */}
-        <div className="w-full max-w-lg">
-          <input
-            type="text"
-            placeholder="Game Title"
-            className="w-full mb-4 px-6 py-4 text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500 transition duration-200"
-          />
-          <textarea
-            placeholder="Enter Game Description"
-            className="w-full mb-4 px-6 py-4 text-lg rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500 transition duration-200"
-            rows={4}
-          ></textarea>
-          <button className="w-full px-6 py-3 text-lg font-medium rounded-lg bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition duration-200">
-            Create Game
-          </button>
-        </div>
+            {/* Create Game Button */}
+            <button
+              onClick={createGame}
+              disabled={loading}
+              className="w-full max-w-md px-6 py-3 text-lg font-medium rounded-lg bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition duration-200"
+            >
+              {loading ? "Creating..." : "Create Game"}
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Success Message */}
+            <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800 mb-8">
+              Game <span className="text-blue-600">Created</span> Successfully!
+            </h1>
+            <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-lg text-left">
+              <div className="space-y-4">
+                {/* Game Code and Copy Button */}
+                <div className="flex items-center justify-between">
+                  <p className="text-lg text-gray-700 font-medium flex flex-row space-x-1">
+                    Game Code:{" "}
+                    <span className="font-mono text-blue-600">{gameCode}</span>
+                    <div className="flex flex-row space-x-1">
+                      <button
+                        onClick={copyToClipboard}
+                        className=""
+                        title="Copy to clipboard"
+                      >
+                        <IoCopy size={20} />
+                      </button>
+                      {copied && (
+                        <p className="text-sm pt-1">Copied to clipboard!</p>
+                      )}
+                    </div>
+                  </p>
+                </div>
+
+                {/* Join Link */}
+                <p className="text-lg text-gray-700">
+                  Share this join link:{" "}
+                  <a
+                    className="underline text-blue-500 hover:text-blue-700"
+                    href={`http://localhost:5173/joingame`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    http://localhost:5173/joingame
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            {/* Players List */}
+            <div className="bg-gray-100 shadow-lg rounded-xl px-8 py-6 w-full max-w-lg mt-8">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">Players</h3>
+              {players.length > 0 ? (
+                <ul className="space-y-2">
+                  {players.map((player, index) => (
+                    <li
+                      key={index}
+                      className="text-lg text-gray-700 border-b border-gray-300 pb-2"
+                    >
+                      {player}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500 mt-4">
+                  No players have joined yet. Share the link to invite friends!
+                </p>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Decorative Background */}
