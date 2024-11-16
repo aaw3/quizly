@@ -8,7 +8,6 @@ const Home = () => {
       <Header />
       <Hero />
       <div className="relative z-10">
-        {/* Ensure sufficient spacing between sections */}
         <LearningCards />
       </div>
     </div>
