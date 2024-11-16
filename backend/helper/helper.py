@@ -11,6 +11,7 @@ import os
 import asyncio
 import time
 from ai import *
+from github import *
 
 # Constants for game status
 STATUS_WAITING = "WAITING"
@@ -65,6 +66,7 @@ def register_player(client: Redis, game_code: str, player_name: str, questions: 
         "websocket_id": None,
         "question_start_time": None,
         "question_attempt": 0,
+        "github_avatar": get_github_avatar(player_name),
     }
     players_data = get_players_data(client, game_code)
     players_data[player_name] = player_data
@@ -277,10 +279,13 @@ def get_relative_leaderboard(players_data: dict, player_name: str):
             if otherPlayer_avg_score > player_avg_score:
                 if relative_leaderboard["ahead"] is None or otherPlayer_avg_score < players_data[relative_leaderboard["ahead"]]["avg_score"]:
                     relative_leaderboard["ahead"]["player_name"] = otherPlayer
+                    relative_leaderboard["ahead"]["avg_score"] = otherPlayer_avg_score
+                    relative_leaderboard["ahead"]["github_avatar"] = players_data[otherPlayer]["github_avatar"]
             elif otherPlayer_avg_score < player_score:
                 if relative_leaderboard["behind"] is None or otherPlayer_avg_score > players_data[relative_leaderboard["behind"]]["avg_score"]:
                     relative_leaderboard["behind"]["player_name"] = name
                     relative_leaderboard["behind"]["avg_score"] = otherPlayer_avg_score
+                    relative_leaderboard["behind"]["github_avatar"] = players_data[otherPlayer]["github_avatar"]
             
     return relative_leaderboard
 
@@ -293,7 +298,8 @@ def get_players_metrics(players_data: dict):
             "avg_score": get_player_avg_score(players_data, name),
             "correct_questions": data["correct_questions"],
             "incorrect_questions": data["incorrect_questions"],
-            "remaining_questions": data["remaining_questions"]
+            "remaining_questions": data["remaining_questions"],
+            "github_avatar": data["github_avatar"],
         }
     return player_metrics
 
