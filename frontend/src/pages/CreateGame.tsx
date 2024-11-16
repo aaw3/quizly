@@ -8,6 +8,7 @@ const CreateGame = () => {
   const [loading, setLoading] = useState(false);
   const [players, setPlayers] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
 
   const createGame = async () => {
     setLoading(true);
@@ -31,27 +32,52 @@ const CreateGame = () => {
     if (gameCode) {
       navigator.clipboard.writeText(gameCode);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1000); // Reset after 2 seconds
+      setTimeout(() => setCopied(false), 1000); // Reset after 1 second
     }
   };
 
-  // Fetch players periodically
   useEffect(() => {
     if (gameCode) {
-      const interval = setInterval(async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:8000/game/${gameCode}/players`
-          );
-          setPlayers(response.data.players || []);
-        } catch (error) {
-          console.error("Failed to fetch players:", error);
-        }
-      }, 3000); // Fetch every 3 seconds
+      const newSocket = new WebSocket(
+        `ws://localhost:8000/ws/host/${gameCode}`
+      );
 
-      return () => clearInterval(interval); // Cleanup interval on component unmount
+      newSocket.onopen = () => {
+        console.log("WebSocket connection established for game:", gameCode);
+        setSocket(newSocket);
+      };
+
+      newSocket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.players) {
+            setPlayers(data.players);
+          } else {
+            console.error("Unexpected message format:", data);
+          }
+        } catch (error) {
+          console.error("Failed to parse WebSocket message:", error);
+        }
+      };
+
+      newSocket.onclose = () => {
+        console.log("WebSocket connection closed");
+      };
+
+      return () => {
+        newSocket.close();
+      };
     }
   }, [gameCode]);
+
+  const sendMessage = (message: string) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(message);
+      console.log("Message sent:", message);
+    } else {
+      console.error("WebSocket is not open");
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -63,7 +89,6 @@ const CreateGame = () => {
       <div className="container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-4xl">
         {!gameCode ? (
           <>
-            {/* Page Title */}
             <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
               Create a <span className="text-blue-600">Game</span>
             </h1>
@@ -72,7 +97,6 @@ const CreateGame = () => {
               friends or students.
             </p>
 
-            {/* Create Game Button */}
             <button
               onClick={createGame}
               disabled={loading}
@@ -83,33 +107,32 @@ const CreateGame = () => {
           </>
         ) : (
           <>
-            {/* Success Message */}
             <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800 mb-8">
               Game <span className="text-blue-600">Created</span> Successfully!
             </h1>
             <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-lg text-left">
               <div className="space-y-4">
-                {/* Game Code and Copy Button */}
                 <div className="flex items-center justify-between">
-                  <p className="text-lg text-gray-700 font-medium flex flex-row space-x-1">
+                  <p className="text-lg text-gray-700 font-medium">
                     Game Code:{" "}
                     <span className="font-mono text-blue-600">{gameCode}</span>
-                    <div className="flex flex-row space-x-1">
-                      <button
-                        onClick={copyToClipboard}
-                        className=""
-                        title="Copy to clipboard"
-                      >
-                        <IoCopy size={20} />
-                      </button>
-                      {copied && (
-                        <p className="text-sm pt-1">Copied to clipboard!</p>
-                      )}
-                    </div>
                   </p>
+                  <div className="flex flex-row space-x-1">
+                    {copied && (
+                      <p className="text-sm font-medium">
+                        Copied to clipboard!
+                      </p>
+                    )}
+                    <button
+                      onClick={copyToClipboard}
+                      className="flex items-center justify-center text-blue-600 hover:text-blue-800 transition duration-200"
+                      title="Copy to clipboard"
+                    >
+                      <IoCopy size={20} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Join Link */}
                 <p className="text-lg text-gray-700">
                   Share this join link:{" "}
                   <a
@@ -121,10 +144,17 @@ const CreateGame = () => {
                     http://localhost:5173/joingame
                   </a>
                 </p>
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => sendMessage("start")}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
+                  >
+                    Start Game
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Players List */}
             <div className="bg-gray-100 shadow-lg rounded-xl px-8 py-6 w-full max-w-lg mt-8">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">Players</h3>
               {players.length > 0 ? (
@@ -148,7 +178,6 @@ const CreateGame = () => {
         )}
       </div>
 
-      {/* Decorative Background */}
       <div className="absolute inset-0 pointer-events-none">
         <svg
           className="absolute bottom-0 left-0 w-full"
