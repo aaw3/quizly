@@ -26,7 +26,7 @@ const Hero = () => {
             Join Game
           </Link>
           <Link
-            to="/"
+            to="/creategame"
             className="px-8 py-3 text-lg font-medium rounded-lg bg-blue-500 text-white shadow-lg hover:bg-blue-600 transition duration-200"
           >
             Create Game
