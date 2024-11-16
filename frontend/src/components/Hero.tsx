@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <section className="relative bg-gradient-to-b from-blue-50 via-gray-100 to-gray-50 py-16">
+    <section className="relative bg-gradient-to-b from-blue-50 via-gray-100 to-gray-50 ">
       <div className="container mx-auto flex flex-col items-center px-4 text-center md:py-20 md:px-10 lg:px-32 xl:max-w-4xl">
         {/* Headline */}
         <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
           Quiz and Compete with{" "}
-          <span className="text-violet-600">AI-powered learning</span>.
+          <span className="text-violet-600">AI-Powered Learning</span>.
         </h1>
 
         {/* Subheading */}
