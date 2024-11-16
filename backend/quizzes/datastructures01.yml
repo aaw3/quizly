@@ -7,194 +7,194 @@ questions:
       D: "O(1)"
     correct: "A"
 
-  - question: "Which data structure uses FIFO (First In, First Out) order?"
-    options:
-      A: "Stack"
-      B: "Queue"
-      C: "Heap"
-      D: "Graph"
-    correct: "B"
-
-  - question: "What is the main property of a max heap?"
-    options:
-      A: "All nodes have the same value"
-      B: "Root is the largest element"
-      C: "Root is the smallest element"
-      D: "Only leaves have values"
-    correct: "B"
-
-  - question: "Which data structure is used for LIFO (Last In, First Out) operations?"
-    options:
-      A: "Queue"
-      B: "Stack"
-      C: "Tree"
-      D: "Heap"
-    correct: "B"
-
-  - question: "In a linked list, which element points to the next node?"
-    options:
-      A: "Head"
-      B: "Node"
-      C: "Pointer"
-      D: "Link"
-    correct: "C"
-
-  - question: "What is the time complexity of accessing an element by index in an array?"
-    options:
-      A: "O(log n)"
-      B: "O(n)"
-      C: "O(1)"
-      D: "O(n^2)"
-    correct: "C"
-
-  - question: "Which of the following is a self-balancing binary search tree?"
-    options:
-      A: "Binary Tree"
-      B: "Binary Search Tree"
-      C: "AVL Tree"
-      D: "Graph"
-    correct: "C"
-
-  - question: "Which operation is typically the fastest in a hash table?"
-    options:
-      A: "Insert"
-      B: "Delete"
-      C: "Search"
-      D: "All of the above"
-    correct: "D"
-
-  - question: "In a stack, which operation removes the top element?"
-    options:
-      A: "Push"
-      B: "Pop"
-      C: "Peek"
-      D: "Insert"
-    correct: "B"
-
-  - question: "Which data structure is typically used to implement recursion?"
-    options:
-      A: "Queue"
-      B: "Stack"
-      C: "Tree"
-      D: "Array"
-    correct: "B"
-
-  - question: "Which of the following is the worst-case time complexity for quicksort?"
-    options:
-      A: "O(log n)"
-      B: "O(n)"
-      C: "O(n^2)"
-      D: "O(n log n)"
-    correct: "C"
-
-  - question: "Which structure can be used to represent hierarchical relationships?"
-    options:
-      A: "Array"
-      B: "Linked List"
-      C: "Tree"
-      D: "Queue"
-    correct: "C"
-
-  - question: "Which of the following is NOT a common use of a stack?"
-    options:
-      A: "Expression evaluation"
-      B: "Function call management"
-      C: "File organization"
-      D: "Undo operations"
-    correct: "C"
-
-  - question: "Which data structure is best for finding the shortest path in a graph?"
-    options:
-      A: "Queue"
-      B: "Stack"
-      C: "Priority Queue"
-      D: "Hash Table"
-    correct: "C"
-
-  - question: "What is the purpose of a hash function in a hash table?"
-    options:
-      A: "To compress data"
-      B: "To quickly locate data"
-      C: "To rearrange data"
-      D: "To encrypt data"
-    correct: "B"
-
-  - question: "Which data structure is ideal for scheduling tasks?"
-    options:
-      A: "Stack"
-      B: "Queue"
-      C: "Binary Tree"
-      D: "Array"
-    correct: "B"
-
-  - question: "Which traversal method visits nodes in the left-root-right order in a binary tree?"
-    options:
-      A: "Preorder"
-      B: "Inorder"
-      C: "Postorder"
-      D: "Level Order"
-    correct: "B"
-
-  - question: "In a doubly linked list, each node has pointers to?"
-    options:
-      A: "Only the next node"
-      B: "Only the previous node"
-      C: "Both next and previous nodes"
-      D: "No other node"
-    correct: "C"
-
-  - question: "What is the space complexity of an adjacency matrix for a graph with n nodes?"
-    options:
-      A: "O(n)"
-      B: "O(n^2)"
-      C: "O(log n)"
-      D: "O(1)"
-    correct: "B"
-
-  - question: "Which operation is typically O(log n) in a binary search tree?"
-    options:
-      A: "Insertion"
-      B: "Deletion"
-      C: "Search"
-      D: "All of the above"
-    correct: "D"
-
-  - question: "Which of these algorithms uses a divide-and-conquer approach?"
-    options:
-      A: "Selection Sort"
-      B: "Insertion Sort"
-      C: "Merge Sort"
-      D: "Bubble Sort"
-    correct: "C"
-
-  - question: "Which data structure provides efficient indexing but not efficient insertion or deletion?"
-    options:
-      A: "Linked List"
-      B: "Array"
-      C: "Hash Table"
-      D: "Tree"
-    correct: "B"
-
-  - question: "What is a queue with both enqueue and dequeue operations at both ends called?"
-    options:
-      A: "Stack"
-      B: "Deque"
-      C: "Priority Queue"
-      D: "Circular Queue"
-    correct: "B"
-
-  - question: "What type of graph has all nodes connected to each other?"
-    options:
-      A: "Sparse Graph"
-      B: "Tree"
-      C: "Complete Graph"
-      D: "DAG"
-    correct: "C"
-
-  - question: "What is the time complexity of inserting an element into a sorted array?"
-    options:
-      A: "O(n)"
-      B: "O(log n)"
-      C: "O(1)"
-      D: "O(n^2)"
-    correct: "A"
+#  - question: "Which data structure uses FIFO (First In, First Out) order?"
+ #   options:
+ #     A: "Stack"
+ #     B: "Queue"
+ #     C: "Heap"
+ #     D: "Graph"
+ #   correct: "B"
+#
+ # - question: "What is the main property of a max heap?"
+ #   options:
+ #     A: "All nodes have the same value"
+ #     B: "Root is the largest element"
+ #     C: "Root is the smallest element"
+ #     D: "Only leaves have values"
+ #   correct: "B"
+#
+ # - question: "Which data structure is used for LIFO (Last In, First Out) operations?"
+ #   options:
+ #     A: "Queue"
+ #     B: "Stack"
+ #     C: "Tree"
+ #     D: "Heap"
+ #   correct: "B"
+#
+ # - question: "In a linked list, which element points to the next node?"
+ #   options:
+ #     A: "Head"
+ #     B: "Node"
+ #     C: "Pointer"
+ #     D: "Link"
+ #   correct: "C"
+#
+ # - question: "What is the time complexity of accessing an element by index in an array?"
+ #   options:
+ #     A: "O(log n)"
+ #     B: "O(n)"
+ #     C: "O(1)"
+ #     D: "O(n^2)"
+ #   correct: "C"
+#
+ # - question: "Which of the following is a self-balancing binary search tree?"
+ #   options:
+ #     A: "Binary Tree"
+ #     B: "Binary Search Tree"
+ #     C: "AVL Tree"
+ #     D: "Graph"
+ #   correct: "C"
+#
+ # - question: "Which operation is typically the fastest in a hash table?"
+ #   options:
+ #     A: "Insert"
+ #     B: "Delete"
+ #     C: "Search"
+ #     D: "All of the above"
+ #   correct: "D"
+#
+ # - question: "In a stack, which operation removes the top element?"
+ #   options:
+ #     A: "Push"
+ #     B: "Pop"
+ #     C: "Peek"
+ #     D: "Insert"
+ #   correct: "B"
+#
+ # - question: "Which data structure is typically used to implement recursion?"
+ #   options:
+ #     A: "Queue"
+ #     B: "Stack"
+ #     C: "Tree"
+ #     D: "Array"
+ #   correct: "B"
+#
+ # - question: "Which of the following is the worst-case time complexity for quicksort?"
+ #   options:
+ #     A: "O(log n)"
+ #     B: "O(n)"
+ #     C: "O(n^2)"
+ #     D: "O(n log n)"
+ #   correct: "C"
+#
+ # - question: "Which structure can be used to represent hierarchical relationships?"
+ #   options:
+ #     A: "Array"
+ #     B: "Linked List"
+ #     C: "Tree"
+ #     D: "Queue"
+ #   correct: "C"
+#
+ # - question: "Which of the following is NOT a common use of a stack?"
+ #   options:
+ #     A: "Expression evaluation"
+ #     B: "Function call management"
+ #     C: "File organization"
+ #     D: "Undo operations"
+ #   correct: "C"
+#
+ # - question: "Which data structure is best for finding the shortest path in a graph?"
+ #   options:
+ #     A: "Queue"
+ #     B: "Stack"
+ #     C: "Priority Queue"
+ #     D: "Hash Table"
+ #   correct: "C"
+#
+ # - question: "What is the purpose of a hash function in a hash table?"
+ #   options:
+ #     A: "To compress data"
+ #     B: "To quickly locate data"
+ #     C: "To rearrange data"
+ #     D: "To encrypt data"
+ #   correct: "B"
+#
+ # - question: "Which data structure is ideal for scheduling tasks?"
+ #   options:
+ #     A: "Stack"
+ #     B: "Queue"
+ #     C: "Binary Tree"
+ #     D: "Array"
+ #   correct: "B"
+#
+ # - question: "Which traversal method visits nodes in the left-root-right order in a binary tree?"
+ #   options:
+ #     A: "Preorder"
+ #     B: "Inorder"
+ #     C: "Postorder"
+ #     D: "Level Order"
+ #   correct: "B"
+#
+ # - question: "In a doubly linked list, each node has pointers to?"
+ #   options:
+ #     A: "Only the next node"
+ #     B: "Only the previous node"
+ #     C: "Both next and previous nodes"
+ #     D: "No other node"
+ #   correct: "C"
+#
+ # - question: "What is the space complexity of an adjacency matrix for a graph with n nodes?"
+ #   options:
+ #     A: "O(n)"
+ #     B: "O(n^2)"
+ #     C: "O(log n)"
+ #     D: "O(1)"
+ #   correct: "B"
+#
+ # - question: "Which operation is typically O(log n) in a binary search tree?"
+ #   options:
+ #     A: "Insertion"
+ #     B: "Deletion"
+ #     C: "Search"
+ #     D: "All of the above"
+ #   correct: "D"
+#
+ # - question: "Which of these algorithms uses a divide-and-conquer approach?"
+ #   options:
+ #     A: "Selection Sort"
+ #     B: "Insertion Sort"
+ #     C: "Merge Sort"
+ #     D: "Bubble Sort"
+ #   correct: "C"
+#
+ # - question: "Which data structure provides efficient indexing but not efficient insertion or deletion?"
+ #   options:
+ #     A: "Linked List"
+ #     B: "Array"
+ #     C: "Hash Table"
+ #     D: "Tree"
+ #   correct: "B"
+#
+ # - question: "What is a queue with both enqueue and dequeue operations at both ends called?"
+ #   options:
+ #     A: "Stack"
+ #     B: "Deque"
+ #     C: "Priority Queue"
+ #     D: "Circular Queue"
+ #   correct: "B"
+#
+ # - question: "What type of graph has all nodes connected to each other?"
+ #   options:
+ #     A: "Sparse Graph"
+ #     B: "Tree"
+ #     C: "Complete Graph"
+ #     D: "DAG"
+ #   correct: "C"
+#
+ # - question: "What is the time complexity of inserting an element into a sorted array?"
+ #   options:
+ #     A: "O(n)"
+ #     B: "O(log n)"
+ #     C: "O(1)"
+ #     D: "O(n^2)"
+ #   correct: "A"
