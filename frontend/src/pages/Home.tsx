@@ -6,7 +6,6 @@ const Home = () => {
     <div className="min-h-screen">
       <Header />
       <Hero />
-      <h1>Home</h1>
     </div>
   );
 };
