@@ -18,6 +18,8 @@ STATUS_STARTED = "started"
 STATUS_PAUSED = "paused"
 STATUS_ENDED = "ended"
 
+NUM_ATTEMPTS = 2
+
 
 # Helper functions for Redis data retrieval
 def get_game_data(client: Redis, game_code: str):
@@ -33,11 +35,14 @@ def set_game_status(client: Redis, game_code: str, status: str):
 
 
 # Player registration and validation
-def register_player(game_data: dict, player_name: str):
+def register_player(game_data: dict, player_name: str, questions: list):
     player_data = {
         "id": str(uuid.uuid4()),
         "score": 0,
-        "questions_answered": []
+        "remaining_questions": random.sample(range(len(questions)), len(questions)),
+        "current_question_index": -1,
+        "websocket_id": None,
+        "question_start_time": None,
     }
     game_data["players"][player_name] = player_data
     return player_data
@@ -70,7 +75,7 @@ def init_game_data(game_code: str, questions: list):
         "players": {},
         "status": STATUS_WAITING,
         "questions": questions,
-        "start_time": None
+        "start_time": None,
     }
 
 
@@ -96,6 +101,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
 
     async def handle_questions():
         """Handles question-answer flow for the player."""
+        #handled_starting_condition = False
         try:
             while True:
                 game_data = get_game_data(client, game_code)
@@ -104,50 +110,85 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 elif player_name not in game_data["players"]:
                     # Retry
                     game_data = get_game_data(client, game_code)
-                    logging.error("Game Data State: " + str(game_data))
                     if player_name not in game_data["players"]:
                         await websocket.send_text("Error: You are not part of this game or your session has expired.")
                         logging.error(f"Player '{player_name}' missing from game data in game '{game_code}'.")
                         break
-                
-                questions_answered = game_data["players"][player_name]["questions_answered"]
 
-                question = await get_random_question(game_data, questions_answered)
-                answer = question.get("correct", "")
-                # Don't send correct answer to player
-                del question["correct"]
-                if not question:
+                # Try to clear any incoming input before the game starts
+                try:
+                    while True: #and not handled_starting_condition:
+                         await asyncio.wait_for(websocket.receive_text(), timeout=0.1)
+
+                # Ran out of input (ideal)
+                except asyncio.TimeoutError:
+                    #handled_starting_condition = True
+                    pass 
+
+                    
+                
+                questions_remaining = game_data["players"][player_name]["remaining_questions"]
+                if len(questions_remaining) == 0 and game_data["players"][player_name]["current_question_index"] == -1:
                     await websocket.send_text("You've answered all the questions!")
                     break
 
+                if game_data["players"][player_name]["current_question_index"] == -1:
+                    question_index = questions_remaining.pop()
+                    question = await get_random_question(game_data, question_index)
+                    game_data["players"][player_name]["remaining_questions"] = questions_remaining
+                    game_data["players"][player_name]["question_start_time"] = time.time()
+                    game_data["players"][player_name]["current_question_index"] = question_index
+                    client.set(f"game:{game_code}", json.dumps(game_data))
+                
+                else:
+                    question_index = game_data["players"][player_name]["current_question_index"]
+                    question = game_data["questions"][question_index]
+
+                correctAnswer = question.get("answer", "")
+                # Don't send correct answer to player
+                del question["answer"]
+
+                
                 await websocket.send_text(json.dumps(question))
                 logging.info(f"Sent question to player '{player_name}': {question}")
 
                 try:
-                    for attempt in range(2):
+                    for attempt in range(NUM_ATTEMPTS):
                         # Create loop waiting for input, in paused state nothing happens
                         # If user sends an input after pause ends, we grab game_data so it can be processed on resume
                         while True:
-                            answer = await websocket.receive_text()
+                            userAnswer = await websocket.receive_text()
+                            # Check if answer is valid
+                            userAnswer = validate_answer(userAnswer, question["options"])
+                            if validate_answer is None:
+                                await websocket.send_text("Invalid answer. Try again.")
+                                continue
                             game_data = get_game_data(client, game_code)
                             if game_data["status"] != STATUS_STARTED:
                                 continue
                             else:
                                 break
                         # First answer
-                        if check_answer(question, answer):
+                        if check_answer(correctAnswer, userAnswer):
                             pts = 1000
                             await websocket.send_text(f"Correct! You earned {pts/(attempt + 1)} points.")
                             break
                         else:
                             await websocket.send_text("Incorrect!")
                             if attempt == 1:
-                                await websocket.send_text(f"The correct answer was: {answer}")
+                                await websocket.send_text(f"The correct answer was: {correctAnswer}: {question["options"][correctAnswer]}")
                                 break
 
                         # Get help from AI:
-                        ai_response = get_ai_help(answer, answer, question["question"])
+                        ai_response = get_ai_help(correctAnswer, userAnswer, question["question"])
                         await websocket.send_text(ai_response)
+
+                    game_data = get_game_data(client, game_code)
+                    game_data["players"][player_name]["score"] += pts/(attempt + 1)
+                    game_data["players"][player_name]["current_question_index"] = -1
+                    game_data["players"][player_name]["question_start_time"] = None
+                    client.set(f"game:{game_code}", json.dumps(game_data))
+
                 except WebSocketDisconnect:
                     logging.info(f"Player '{player_name}' disconnected while answering questions.")
                     break
@@ -179,18 +220,22 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
 
 
 # Utility Functions
-async def get_random_question(game_data, questions_answered):
-    questions = game_data["questions"]
-    available_questions = [q for q in questions if q["question"] not in questions_answered]
-    if available_questions:
-        question = random.choice(available_questions)
-        #question.pop("correct", None)
-        return question
-    return None
+
+def validate_answer(answer, question_options):
+    # Get the casing of the answer:
+    keys = question_options.keys()
+    if len(keys) == 0:
+        return None
+    upperCase = list(keys)[0].isupper()
+    if answer.lower() in [k.lower() for k in question_options.keys()]:
+        return answer.upper() if upperCase else answer.lower()
+
+async def get_random_question(game_data, question_index):
+    return game_data["questions"][question_index]
 
 
-def check_answer(question, answer):
-    return question.get("correct", "").lower() == answer.lower()
+def check_answer(answerCorrect, answerUser):
+    return answerCorrect.lower() == answerUser.lower()
 
 
 async def wait_for_resume(game_data, game_code, websocket, client):
