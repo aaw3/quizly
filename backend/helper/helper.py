@@ -73,7 +73,7 @@ def register_player(client: Redis, game_code: str, player_name: str, questions: 
 
 async def validate_player(players_data: dict, player_name: str, websocket: WebSocket):
     if not players_data or player_name not in players_data:
-        await websocket.send_text("You are not part of this game")
+        await websocket.send_text("[USER_NOT_IN_GAME]")
         await websocket.close()
         logging.info(f"WebSocket closed for '{player_name}': not part of game")
         return False
@@ -128,11 +128,11 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 game_data = get_game_data(client, game_code)
                 players_data = get_players_data(client, game_code)
                 if not game_data: 
-                    await websocket.send_text("Error: Game not found.")
+                    await websocket.send_text("[GAME_NOT_FOUND]")
                 elif player_name not in players_data:
                     # Retry
                     if player_name not in players_data:
-                        await websocket.send_text("Error: You are not part of this game or your session has expired.")
+                        await websocket.send_text("[USER_NOT_IN_GAME]")
                         logging.error(f"Player '{player_name}' missing from game data in game '{game_code}'.")
                         break
 
@@ -150,12 +150,11 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 
                 questions_remaining = players_data[player_name]["remaining_questions"]
                 if len(questions_remaining) == 0 and players_data[player_name]["current_question_index"] == -1:
-                    await websocket.send_text("You've answered all the questions!")
+                    await websocket.send_text("[ALL_QUESTIONS_ANSWERED]")
                     break
 
 
                 if players_data[player_name]["current_question_index"] == -1:
-                    await websocket.send_text("CQI is -1, Q REMAINING: " + str(questions_remaining))
                     question_index = questions_remaining.pop()
                     question = await get_random_question(game_data, question_index)
                     players_data[player_name]["remaining_questions"] = questions_remaining
@@ -171,8 +170,8 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 # Don't send correct answer to player
                 del question["answer"]
 
-                
-                await websocket.send_text(json.dumps(question))
+                response = {"question": question}
+                await websocket.send_text(json.dumps(response))
                 logging.info(f"Sent question to player '{player_name}': {question}")
 
                 try:
@@ -186,7 +185,8 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                             # Check if answer is valid
                             userAnswer = validate_answer(userAnswer, question["options"])
                             if userAnswer is None:
-                                await websocket.send_text("Invalid answer. Try again.")
+                                response = {"attempt": {"valid": False, "final": False, "correct": False, "points": 0}}
+                                await websocket.send_text(json.dumps(response))
                                 continue
                             game_state = get_game_state(client, game_code)
                             if game_state != STATUS_STARTED:
@@ -195,22 +195,25 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                                 break
                         # First answer
                         if check_answer(correctAnswer, userAnswer):
-                            await websocket.send_text(f"Correct! You earned {pts/(attempt + 1)} points.")
+                            response = {"attempt": {"valid": True, "final": True, "correct": True, "points": pts/(attempt + 1)}}
+                            await websocket.send_text(json.dumps(response))
                             players_data = get_players_data(client, game_code)
                             players_data[player_name]["correct_questions"].append(question_index)
                             break
                         else:
-                            await websocket.send_text("Incorrect!")
+                            response = {"attempt": {"valid": True, "final": False, "correct": False}}
+                            await websocket.send_text(json.dumps(response))
                             players_data = get_players_data(client, game_code)
                             players_data[player_name]["question_attempt"] += 1
                             if attempt == 1:
-                                await websocket.send_text(f"The correct answer was: {correctAnswer}: {question["options"][correctAnswer]}")
+                                response = {"attempt": {"final": True, "correct": False, "points": 0, "answer": correctAnswer}}
                                 players_data[player_name]["incorrect_questions"].append(question_index)
                                 break
 
                         # Get help from AI:
                         ai_response = get_ai_help(correctAnswer, userAnswer, question["question"])
-                        await websocket.send_text(ai_response)
+                        response = {"help": ai_response}
+                        await websocket.send_text(json.dumps(response))
 
                     players_data = get_players_data(client, game_code)
                     players_data[player_name]["score"] += pts/(attempt + 1)
@@ -221,7 +224,8 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
 
                     # Send score metrics to player
                     relative_leaderboard = get_relative_leaderboard(players_data, player_name)
-                    await websocket.send_text(json.dumps(relative_leaderboard))
+                    response = {"leaderboard": relative_leaderboard}
+                    await websocket.send_text(json.dumps(response))
 
                 except WebSocketDisconnect:
                     logging.info(f"Player '{player_name}' disconnected while answering questions.")
@@ -339,7 +343,7 @@ async def manage_host_session(websocket: WebSocket, client: Redis, game_code: st
         #await websocket.send_text(str(game_state) + str(STATUS_WAITING))
 
         if game_state == STATUS_WAITING:
-            await websocket.send_text("Type 'start' to begin the game")
+            await websocket.send_text("[WAITING]")
 
         try:
             while True:
@@ -374,7 +378,7 @@ async def manage_host_session(websocket: WebSocket, client: Redis, game_code: st
                     break
 
                 else:
-                    await websocket.send_text("Invalid command or inappropriate command for the current game state.")
+                    await websocket.send_text(["[INVALID_COMMAND]"])
 
         except WebSocketDisconnect:
             logging.info("Host disconnected")
@@ -384,9 +388,14 @@ async def manage_host_session(websocket: WebSocket, client: Redis, game_code: st
 
     async def retrieve_game_metrics():
         try:
+            num_players = len(get_players_data(client, game_code))
             while True:
                 game_state = get_game_state(client, game_code)
-                if game_state == STATUS_STARTED:
+                players_data = get_players_data(client, game_code)
+
+                num_players_current = len(players_data)
+                
+                if game_state == STATUS_STARTED or num_players_current != num_players:
                     game_data = get_game_data(client, game_code)
                     # Remove questions from game data to avoid bloating the socket message
                     game_data.pop("questions", None)
@@ -396,7 +405,13 @@ async def manage_host_session(websocket: WebSocket, client: Redis, game_code: st
                         "game_data": game_data,
                         "player_metrics": player_metrics,
                     }
-                    await websocket.send_text(json.dumps(game_metrics))
+                    response = {"metrics": game_metrics}
+                    await websocket.send_text(json.dumps(response))
+
+                # Update player count if it has changed
+                if num_players_current != num_players:
+                    num_players = num_players_current
+
                 await asyncio.sleep(1)
         except WebSocketDisconnect:
             logging.info("Host disconnected")

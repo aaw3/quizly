@@ -125,12 +125,12 @@ async def host_websocket(websocket: WebSocket, game_code: str):
 
         game_data = get_game_data(client, game_code)
         if not game_data:
-            await websocket.send_text("Game not found")
+            await websocket.send_text("[GAME_NOT_FOUND]")
             await websocket.close()
             return
 
         if game_code in active_hosts:
-            await websocket.send_text("Host already connected")
+            await websocket.send_text("[HOST_ALREADY_CONNECTED]")
             await websocket.close()
             return
 
