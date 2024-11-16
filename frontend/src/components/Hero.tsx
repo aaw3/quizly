@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <section className="dark:bg-gray-100 dark:text-gray-800">
-      <div className="container mx-auto flex flex-col items-center px-4  text-center md:py-32 md:px-10 lg:px-32 xl:max-w-4xl">
+    <section className="">
+      <div className="container mx-auto flex flex-col items-center px-4 text-center md:py-32 md:px-10 lg:px-32 xl:max-w-4xl">
         <h1 className="text-4xl font-bold leading-none sm:text-5xl">
           Quiz and Compete with{" "}
           <span className="text-violet-600">AI-powered learning</span>.
         </h1>
-        <p className="px-8 mt-8 mb-12 text-lg">
+        <p className="px-8 mt-8 mb-6 text-lg">
           Challenge your friends, master new topics, and level up your skills
           with <span className="text-violet-600">AI-driven quizzes</span> that
           adapt to you.
