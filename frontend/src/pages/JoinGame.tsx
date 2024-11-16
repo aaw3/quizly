@@ -1,7 +1,7 @@
 import Header from "../components/Header";
 const JoinGame = () => {
   return (
-    <section className="relative bg-gradient-to-b from-blue-50 to-gray-50 min-h-screen">
+    <section className="relative bg-gradient-to-b from-blue-50 to-gray-50 min-h-screen pb-72">
       <Header />
       <div className="container mx-auto flex flex-col items-center px-4 text-center py-36 md:px-10 lg:px-32 xl:max-w-4xl">
         {/* Page Title */}
