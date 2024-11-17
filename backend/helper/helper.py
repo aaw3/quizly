@@ -129,6 +129,9 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
     async def handle_questions():
         """Handles question-answer flow for the player."""
         #handled_starting_condition = False
+
+        # Must be global
+        ranOutOfTime = False
         try:
             while True:
                 game_data = get_game_data(client, game_code)
@@ -151,6 +154,13 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 except asyncio.TimeoutError:
                     #handled_starting_condition = True
                     pass 
+
+                # Loop through until receives any input to pause functionality
+                if ranOutOfTime:
+                    response = {"out_of_time": {"answer": f"{correctAnswer}. {question["options"][correctAnswer]}"}}
+                    await websocket.send_text(json.dumps(response))
+                    await websocket.receive_text()
+                    ranOutOfTime = False
 
                     
                 
@@ -184,6 +194,8 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 del question["answer"]
 
                 question['start_time'] = players_data[player_name]["question_start_time"]
+                question['questions_remaining'] = len(players_data[player_name]["remaining_questions"])
+                question['total_questions'] = len(game_data["questions"])
                 response = {"question": question}
                 await websocket.send_text(json.dumps(response))
                 logging.info(f"Sent question to player '{player_name}': {question}")
@@ -193,7 +205,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                     wrong_multiplier = 0.65
                     time_multiplier = 0.75
                     saved_attempts = players_data[player_name]["question_attempt"]
-                    ranOutOfTime = False
+
                     for attempt in range(saved_attempts, NUM_ATTEMPTS):
                         # Create loop waiting for input, in paused state nothing happens
                         # If user sends an input after pause ends, we grab game_data so it can be processed on resume
@@ -324,6 +336,7 @@ def get_relative_leaderboard(players_data: dict, player_name: str):
     relative_leaderboard = {
         "ahead": None,
         "behind": None,
+        "place": 0,
     }
     for otherPlayer in players_data.keys():
         if otherPlayer != player_name:
@@ -340,6 +353,7 @@ def get_relative_leaderboard(players_data: dict, player_name: str):
                     behind_player["player_name"] = otherPlayer
                     behind_player["avg_score"] = otherPlayer_avg_score
                     behind_player["github_avatar"] = players_data[otherPlayer]["github_avatar"]
+    relative_leaderboard["place"] = len([p for p in players_data.keys() if get_player_avg_score(players_data, p) > player_avg_score]) + 1
             
     return relative_leaderboard
 
