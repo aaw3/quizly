@@ -22,6 +22,7 @@ interface GameMetrics {
 
 const CreateGame = () => {
   const [gameCode, setGameCode] = useState<string | null>(null);
+  const [error, setError] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [players, setPlayers] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<GameMetrics | null>(null);
@@ -57,7 +58,6 @@ const CreateGame = () => {
 
   useEffect(() => {
     if (gameCode) {
-      // Establish WebSocket connection
       const newSocket = new WebSocket(
         `ws://localhost:8000/ws/host/${gameCode}`
       );
@@ -73,14 +73,11 @@ const CreateGame = () => {
           const data = JSON.parse(event.data);
 
           if (data.metrics) {
-            // Update metrics and players
             setMetrics(data.metrics);
-
-            // Extract player names from player_metrics
             const playerNames = Object.keys(data.metrics.player_metrics);
             setPlayers(playerNames);
           } else if (data.type === "info" && data.message === "[START]") {
-            setGameStarted(true); // Game has started
+            setGameStarted(true);
           } else {
             console.error("Unexpected message format:", data);
           }
@@ -94,17 +91,22 @@ const CreateGame = () => {
       };
 
       return () => {
-        newSocket.close(); // Cleanup WebSocket on component unmount
+        newSocket.close();
       };
     }
   }, [gameCode]);
 
   const sendMessage = (message: string) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(message);
-      console.log("Message sent:", message);
-      if (message === "start") {
-        setGameStarted(true);
+      if (message === "start" && (!players || players.length === 0)) {
+        setError(true);
+        setTimeout(() => setError(false), 2000);
+      } else {
+        socket.send(message);
+        console.log("Message sent:", message);
+        if (message === "start") {
+          setGameStarted(true);
+        }
       }
     } else {
       console.error("WebSocket is not open");
@@ -298,6 +300,11 @@ const CreateGame = () => {
                 </>
               )}
             </div>
+            {error && (
+              <p className="text-red-500 mt-4">
+                You cannot start the game without players!
+              </p>
+            )}
           </>
         )}
       </div>
