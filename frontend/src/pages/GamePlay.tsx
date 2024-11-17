@@ -22,7 +22,9 @@ const GamePlay = () => {
     if (!gameCode || !playerName) return;
 
     const ws = new WebSocket(
-      `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/game/${gameCode}/${playerName}`
+      `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${
+        import.meta.env.VITE_PORT
+      }/ws/game/${gameCode}/${playerName}`
     );
 
     ws.onopen = () => {
@@ -43,17 +45,17 @@ const GamePlay = () => {
 
     ws.onmessage = (event) => {
       console.log("Received WebSocket message:", event.data);
-      if (event.data === "[END]") {
+      if (event.data === "[END]" || event.data === "[ALL_QUESTIONS_ANSWERED]") {
         setGameOver(true);
       } else if (event.data === "[PAUSE]") {
         setIsPaused(true); // Pause the game
       } else if (event.data === "[RESUME]") {
         setIsPaused(false); // Resume the game
-      } 
+      }
       try {
         const data = JSON.parse(event.data);
         console.log("Parsed data:", data);
-        if (data.help){
+        if (data.help) {
           setExplanation(data.help);
         }
 
@@ -107,7 +109,9 @@ const GamePlay = () => {
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && selectedAnswer === null && !isPaused) {
       setIsCorrect(false);
-      setExplanation("Time's up! The correct answer will be displayed shortly.");
+      setExplanation(
+        "Time's up! The correct answer will be displayed shortly."
+      );
     }
   }, [timeLeft, selectedAnswer, isPaused]);
 
@@ -119,6 +123,17 @@ const GamePlay = () => {
     }
   };
 
+  // Handle "Try Again" button click
+  const handleTryAgain = () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send("TRY_AGAIN"); // Send a "TRY_AGAIN" message to the server
+      setSelectedAnswer(null); // Reset selected answer
+      setIsCorrect(null); // Reset correctness status
+      setExplanation(null); // Clear explanation
+      setTimeLeft(30); // Reset timer for the question
+    }
+  };
+
   return (
     <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen">
       <Header />
@@ -126,7 +141,8 @@ const GamePlay = () => {
         <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-2xl mx-auto mt-20 text-center">
           <h2 className="text-4xl font-bold text-gray-800 mb-4">Game Over</h2>
           <p className="text-lg text-gray-700 mb-6">
-            Thanks for playing, <span className="font-semibold">{playerName}</span>!
+            Thanks for playing,{" "}
+            <span className="font-semibold">{playerName}</span>!
           </p>
           <p className="text-2xl font-bold text-blue-600 mb-6">
             Your Final Score: {score} pts
@@ -144,9 +160,12 @@ const GamePlay = () => {
           {isPaused && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-xl px-8 py-6 text-center shadow-lg max-w-sm">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Game Paused</h2>
-                <p className="text-lg text-gray-600 mb-6">The host has paused the game. Take a moment to relax.</p>
-                
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                  Game Paused
+                </h2>
+                <p className="text-lg text-gray-600 mb-6">
+                  The host has paused the game. Take a moment to relax.
+                </p>
               </div>
             </div>
           )}
@@ -193,9 +212,16 @@ const GamePlay = () => {
 
             {explanation && (
               <div className="bg-gray-100 shadow-lg rounded-xl px-8 py-6 w-full max-w-2xl mt-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">AI Explanation</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  AI Explanation
+                </h3>
                 <p className="text-lg text-gray-700">{explanation}</p>
-                <button className="bg-blue-600 px-6 py-3 text-white rounded-lg my-4">Try Again</button>
+                <button
+                  onClick={handleTryAgain}
+                  className="bg-blue-600 px-6 py-3 text-white rounded-lg my-4"
+                >
+                  Try Again
+                </button>
               </div>
             )}
           </div>
