@@ -28,12 +28,13 @@ const CreateGame = () => {
   const [metrics, setMetrics] = useState<GameMetrics | null>(null);
   const [copied, setCopied] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [gameStarted, setGameStarted] = useState<boolean>(false);
+  const [gameEnded, setGameEnded] = useState<boolean>(true);
 
   const createGame = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(`http://${import.meta.env.HOST}:${import.meta.env.PORT}/api/creategame`);
+      const response = await axios.post(`${import.meta.env.VITE_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/api/creategame`);
       const data = response.data;
 
       if (data.game_code) {
@@ -59,7 +60,7 @@ const CreateGame = () => {
   useEffect(() => {
     if (gameCode) {
       const newSocket = new WebSocket(
-        `ws://${import.meta.env.HOST}:${import.meta.env.PORT}/ws/host/${gameCode}`
+        `ws://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/host/${gameCode}`
       );
 
       newSocket.onopen = () => {
@@ -106,6 +107,9 @@ const CreateGame = () => {
         console.log("Message sent:", message);
         if (message === "start") {
           setGameStarted(true);
+        }
+        if (message === "end"){
+          setGameEnded(true);
         }
       }
     } else {
@@ -165,7 +169,7 @@ const CreateGame = () => {
             </button>
           </>
         ) : (
-          <>
+          <> {!gameEnded ? (<>
             <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800 mb-8">
               Game <span className="text-blue-600">Created</span> Successfully!
             </h1>
@@ -200,7 +204,7 @@ const CreateGame = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    http://localhost:5173/joingame
+                    http://{import.meta.env.VITE_HOST}:{import.meta.env.VITE_PORT}/joingame
                   </a>
                 </p>
                 <div className="flex justify-center mt-6">
@@ -304,7 +308,21 @@ const CreateGame = () => {
               <p className="text-red-500 mt-4">
                 You cannot start the game without players!
               </p>
-            )}
+            )}</>) : (<div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-2xl text-center">
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">Game Over</h2>
+              <p className="text-lg text-gray-700 mb-6">
+                Thanks for playing!
+              </p>
+              <p className="text-2xl font-bold text-blue-600 mb-6">
+                Final Scores: 
+              </p>
+              <button
+                onClick={() => window.location.reload()} // Reload page to restart
+                className="px-6 py-3 bg-violet-600 text-white rounded-lg shadow hover:bg-violet-700 transition duration-200"
+              >
+                Play Again
+              </button>
+            </div>)}
           </>
         )}
       </div>
