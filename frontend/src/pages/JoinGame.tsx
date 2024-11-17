@@ -131,7 +131,7 @@ const JoinGame = () => {
                 <p className="text-lg text-gray-700">
                   Hang tight! The host will start the game soon.
                 </p>
-                <div className="flex items-center justify-center space-x-2 pb-4">
+                <div className="flex items-center justify-center space-x-2 py-4">
                   <div
                     className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
                     style={{ animationDelay: "0s" }}
@@ -145,6 +145,12 @@ const JoinGame = () => {
                     style={{ animationDelay: "0.4s" }}
                   ></div>
                 </div>
+                <p className="text-lg text-gray-700 font-bold">
+                  How it works:
+                </p>
+                <p className="text-lg text-gray-700">
+                Answer questions, and if you get one wrong, AI provides help and gives you 50% credit for learning from it.
+                </p>
               </div>
             </div>
           </>
