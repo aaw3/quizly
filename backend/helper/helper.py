@@ -251,17 +251,20 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                             players_data = get_players_data(client, game_code)
                             players_data[player_name]["correct_questions"].append(question_index)
                             save_players_data(client, game_code, players_data)
+                            waitingAfterQuestion = True
                             break
                         else:
-                            response = {"attempt": {"valid": True, "final": False, "correct": False}}
-                            await websocket.send_text(json.dumps(response))
-                            players_data = get_players_data(client, game_code)
-                            players_data[player_name]["question_attempt"] += 1
+                            if attempt == 0:
+                                response = {"attempt": {"valid": True, "final": False, "correct": False}}
+                                await websocket.send_text(json.dumps(response))
+                                players_data = get_players_data(client, game_code)
+                                players_data[player_name]["question_attempt"] += 1
                             if attempt == 1:
                                 points = 0
                                 response = {"attempt": {"final": True, "correct": False, "points": points, "answer": correctAnswer}}
                                 players_data[player_name]["incorrect_questions"].append(question_index)
                                 save_players_data(client, game_code, players_data)
+                                waitingAfterQuestion = True
                                 break
 
                         # Get help from AI:
