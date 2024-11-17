@@ -84,14 +84,17 @@ async def validate_player(players_data: dict, player_name: str, websocket: WebSo
 
 
 # Load and initialize questions
-def load_questions():
+def load_questions(user_prompt: str):
     try:
-        quiz_source = random.choice(os.listdir("quizzes"))
-        with open(f"quizzes/{quiz_source}", "r") as file:
+        quiz_source = generate_questions(user_prompt)
+        with open(f"{quiz_source}", "r") as file:
             quiz_yml = safe_load(file)
         return quiz_yml.get("questions", [])
-    except (yaml.YAMLError, FileNotFoundError):
-        logging.error("Unable to load quiz file")
+    except (yaml.YAMLError):
+        logging.error("yaml")
+        return None
+    except (FileNotFoundError):
+        logging.error("File not found")
         return None
 
 

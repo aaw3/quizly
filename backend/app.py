@@ -29,9 +29,9 @@ active_hosts = {}
 
 # Create Game
 @app.post("/api/creategame")
-async def create_game():
+async def create_game(user_prompt: str):
     game_code = generate_game_code()
-    questions = load_questions()
+    questions = load_questions(user_prompt)
     if not questions:
         return JSONResponse(content={"message": "Error loading quiz file"}, status_code=500)
 

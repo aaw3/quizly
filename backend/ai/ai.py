@@ -20,7 +20,7 @@ def get_ai_help(answerCorrect: str, answerIncorrect: str, question: str) -> str:
             #},
             {
                 "role": "user",
-                "content": f"Provide hints and help the user understand. Do not give the answer. Be brief. Question: {question}\nCorrect Answer: {answerCorrect}\nUser's Answer: {answerIncorrect}"
+                "content": f"Provide hints and help the user understand. Do not give the answer. Be brief. Don't give affirmations. Question: {question}\nCorrect Answer: {answerCorrect}\nUser's Answer: {answerIncorrect}"
             }
         ],
         model="llama3-8b-8192",
@@ -47,15 +47,29 @@ def generate_questions(prompt: str) -> str:
             messages=[
                 {
                     "role": "user",
-                    "content": f"Generate a set of multiple-choice questions based on the following prompt. "
-                               f"Provide each question with options A, B, C, D, and answer. "
-                               f"Output should be in YAML format.\n\nPrompt: {prompt}"
+                    "content": (
+                        "Generate a set of multiple-choice questions based on the following prompt. "
+                        "The number of questions should be specified if not default to 10"
+                        "Provide each question with options A, B, C, D, and the correct answer. "
+                        "Respond with the YAML output and nothing else. "
+                        "Output should be in YAML format:\n\n"
+                        "questions:\n"
+                        "  - question: \"Your question here\"\n"
+                        "    options:\n"
+                        "      A: \"Option A\"\n"
+                        "      B: \"Option B\"\n"
+                        "      C: \"Option C\"\n"
+                        "      D: \"Option D\"\n"
+                        "    answer: \"A\"\n\n"
+                        f"Prompt: {prompt}"
+                    )
                 }
             ],
             model="llama3-8b-8192",
             max_tokens=1000,
             stream=False
         )
+
 
         questions_yaml = chat_completion.choices[0].message.content
         output_file = os.path.join("quizzes", f"questions_{uuid.uuid4()}.yaml")
