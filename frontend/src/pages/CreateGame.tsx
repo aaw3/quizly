@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Header from "../components/Header";
 import { IoCopy } from "react-icons/io5";
+import QuizPromptInput from "../components/QuizPromptInput";
 
 interface PlayerMetric {
   score: number;
@@ -23,31 +24,13 @@ interface GameMetrics {
 const CreateGame = () => {
   const [gameCode, setGameCode] = useState<string | null>(null);
   const [error, setError] = useState<boolean>(false);
-  const [loading, setLoading] = useState(false);
   const [players, setPlayers] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<GameMetrics | null>(null);
   const [copied, setCopied] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [gameEnded, setGameEnded] = useState<boolean>(false);
-
-  const createGame = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/api/creategame`);
-      const data = response.data;
-
-      if (data.game_code) {
-        setGameCode(data.game_code);
-      } else {
-        console.error(data.message || "Error creating game");
-      }
-    } catch (error) {
-      console.error("Failed to create game:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [quizMade, setQuizMade] = useState<boolean>(false);
 
   const copyToClipboard = () => {
     if (gameCode) {
@@ -60,7 +43,9 @@ const CreateGame = () => {
   useEffect(() => {
     if (gameCode) {
       const newSocket = new WebSocket(
-        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/host/${gameCode}`
+        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${
+          import.meta.env.VITE_PORT
+        }/ws/host/${gameCode}`
       );
 
       newSocket.onopen = () => {
@@ -108,7 +93,7 @@ const CreateGame = () => {
         if (message === "start") {
           setGameStarted(true);
         }
-        if (message === "end"){
+        if (message === "end") {
           setGameEnded(true);
         }
       }
@@ -149,180 +134,185 @@ const CreateGame = () => {
   return (
     <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen pb-[340px]">
       <Header />
-      <div className="container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-4xl">
+      <div className="container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-6xl">
         {!gameCode ? (
-          <>
-            <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
-              Create a <span className="text-blue-600">Game</span>
-            </h1>
-            <p className="px-6 mt-6 mb-12 text-lg text-gray-700 sm:px-12 lg:px-20">
-              Use AI to create custom quizzes and start a new game for your
-              friends or students.
-            </p>
-
-            <button
-              onClick={createGame}
-              disabled={loading}
-              className="w-full max-w-md px-6 py-3 text-lg font-medium rounded-lg bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition duration-200"
-            >
-              {loading ? "Creating..." : "Create Game"}
-            </button>
-          </>
+          <QuizPromptInput
+            setGameCode={setGameCode}
+            setQuizMade={setQuizMade}
+          />
         ) : (
-          <> {!gameEnded ? (<>
-            <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800 mb-8">
-              Game <span className="text-blue-600">Created</span> Successfully!
-            </h1>
-            <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-lg text-left">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-lg text-gray-700 font-medium">
-                    Game Code:{" "}
-                    <span className="font-mono text-blue-600">{gameCode}</span>
-                  </p>
-                  <div className="flex flex-row space-x-1">
-                    {copied && (
-                      <p className="text-gray-600 text-xs pt-[3px]">
-                      Copied to clipboard!
+          <>
+            {" "}
+            {!gameEnded ? (
+              <>
+                <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800 mb-8">
+                  Game <span className="text-blue-600">Created</span>{" "}
+                  Successfully!
+                </h1>
+                <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-lg text-left">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-lg text-gray-700 font-medium">
+                        Game Code:{" "}
+                        <span className="font-mono text-blue-600">
+                          {gameCode}
+                        </span>
+                      </p>
+                      <div className="flex flex-row space-x-1">
+                        {copied && (
+                          <p className="text-gray-600 text-xs pt-[3px]">
+                            Copied to clipboard!
+                          </p>
+                        )}
+                        <button
+                          onClick={copyToClipboard}
+                          className="flex items-center justify-center text-blue-600 hover:text-blue-800 transition duration-200"
+                          title="Copy to clipboard"
+                        >
+                          <IoCopy size={20} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-lg text-gray-700">
+                      Share this join link:{" "}
+                      <a
+                        className="underline text-blue-500 hover:text-blue-700"
+                        href={`http://localhost:5173/joingame`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        http://{import.meta.env.VITE_HOST}:
+                        {import.meta.env.VITE_PORT}/joingame
+                      </a>
                     </p>
-                    )}
-                    <button
-                      onClick={copyToClipboard}
-                      className="flex items-center justify-center text-blue-600 hover:text-blue-800 transition duration-200"
-                      title="Copy to clipboard"
-                    >
-                      <IoCopy size={20} />
-                    </button>
+                    <div className="flex justify-center mt-6">
+                      {gameStarted === false ? (
+                        <button
+                          onClick={() => sendMessage("start")}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
+                        >
+                          Start Game
+                        </button>
+                      ) : (
+                        <div className="flex flex-row space-x-4">
+                          <button
+                            onClick={() => sendMessage("pause")}
+                            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
+                          >
+                            Pause Game
+                          </button>
+                          <button
+                            onClick={() => sendMessage("end")}
+                            className="px-6 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition duration-200"
+                          >
+                            End Game
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <p className="text-lg text-gray-700">
-                  Share this join link:{" "}
-                  <a
-                    className="underline text-blue-500 hover:text-blue-700"
-                    href={`http://localhost:5173/joingame`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    http://{import.meta.env.VITE_HOST}:{import.meta.env.VITE_PORT}/joingame
-                  </a>
-                </p>
-                <div className="flex justify-center mt-6">
-                  {gameStarted === false ? (
-                    <button
-                      onClick={() => sendMessage("start")}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
-                    >
-                      Start Game
-                    </button>
+                <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-lg mt-8">
+                  {!gameStarted ? (
+                    <>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                        Players in Game
+                      </h3>
+                      {players.length > 0 ? (
+                        <ul className="space-y-2">
+                          {players.map((player, index) => (
+                            <li
+                              key={index}
+                              className="flex items-center text-lg text-gray-700 border-b border-gray-300 pb-2"
+                            >
+                              {/* Show GitHub avatar if available, otherwise placeholder */}
+                              {metrics?.player_metrics[player]
+                                ?.github_avatar ? (
+                                <img
+                                  src={
+                                    metrics.player_metrics[player].github_avatar
+                                  }
+                                  alt={`${player}'s avatar`}
+                                  className="w-8 h-8 rounded-full mr-4"
+                                />
+                              ) : (
+                                <div
+                                  className={`w-8 h-8 rounded-full mr-4 flex items-center justify-center text-white font-bold ${getPlayerColor(
+                                    player
+                                  )}`}
+                                >
+                                  {getPlayerInitials(player)}
+                                </div>
+                              )}
+                              {player}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-gray-500 mt-4">
+                          No players have joined yet. Share the link to invite
+                          friends!
+                        </p>
+                      )}
+                    </>
                   ) : (
-                    <div className="flex flex-row space-x-4">
-                      <button
-                        onClick={() => sendMessage("pause")}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
-                      >
-                        Pause Game
-                      </button>
-                      <button
-                        onClick={() => sendMessage("end")}
-                        className="px-6 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition duration-200"
-                      >
-                        End Game
-                      </button>
-                    </div>
+                    <>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                        Game Metrics
+                      </h3>
+                      {metrics ? (
+                        <div className="space-y-4">
+                          {Object.entries(metrics.player_metrics).map(
+                            ([name, data], index) => (
+                              <div
+                                key={index}
+                                className="flex justify-between items-center bg-gray-100 px-6 py-4 rounded-lg shadow"
+                              >
+                                <span className="font-medium text-gray-700">
+                                  {name}
+                                </span>
+                                <span className="font-bold text-blue-600">
+                                  {data.score} pts
+                                </span>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500">
+                          Waiting for game metrics...
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
+                {error && (
+                  <p className="text-red-500 mt-4">
+                    You cannot start the game without players!
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-2xl text-center">
+                <h2 className="text-4xl font-bold text-gray-800 mb-4">
+                  Game Over
+                </h2>
+                <p className="text-lg text-gray-700 mb-6">
+                  Thanks for playing!
+                </p>
+                <p className="text-2xl font-bold text-blue-600 mb-6">
+                  Final Scores:
+                </p>
+                <button
+                  onClick={() => window.location.reload()} // Reload page to restart
+                  className="px-6 py-3 bg-violet-600 text-white rounded-lg shadow hover:bg-violet-700 transition duration-200"
+                >
+                  Play Again
+                </button>
               </div>
-            </div>
-
-            <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-lg mt-8">
-              {!gameStarted ? (
-                <>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                    Players in Game
-                  </h3>
-                  {players.length > 0 ? (
-                    <ul className="space-y-2">
-                      {players.map((player, index) => (
-                        <li
-                          key={index}
-                          className="flex items-center text-lg text-gray-700 border-b border-gray-300 pb-2"
-                        >
-                          {/* Show GitHub avatar if available, otherwise placeholder */}
-                          {metrics?.player_metrics[player]?.github_avatar ? (
-                            <img
-                              src={metrics.player_metrics[player].github_avatar}
-                              alt={`${player}'s avatar`}
-                              className="w-8 h-8 rounded-full mr-4"
-                            />
-                          ) : (
-                            <div
-                              className={`w-8 h-8 rounded-full mr-4 flex items-center justify-center text-white font-bold ${getPlayerColor(
-                                player
-                              )}`}
-                            >
-                              {getPlayerInitials(player)}
-                            </div>
-                          )}
-                          {player}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-500 mt-4">
-                      No players have joined yet. Share the link to invite
-                      friends!
-                    </p>
-                  )}
-                </>
-              ) : (
-                <>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                    Game Metrics
-                  </h3>
-                  {metrics ? (
-                    <div className="space-y-4">
-                      {Object.entries(metrics.player_metrics).map(
-                        ([name, data], index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between items-center bg-gray-100 px-6 py-4 rounded-lg shadow"
-                          >
-                            <span className="font-medium text-gray-700">
-                              {name}
-                            </span>
-                            <span className="font-bold text-blue-600">
-                              {data.score} pts
-                            </span>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">Waiting for game metrics...</p>
-                  )}
-                </>
-              )}
-            </div>
-            {error && (
-              <p className="text-red-500 mt-4">
-                You cannot start the game without players!
-              </p>
-            )}</>) : (<div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-2xl text-center">
-              <h2 className="text-4xl font-bold text-gray-800 mb-4">Game Over</h2>
-              <p className="text-lg text-gray-700 mb-6">
-                Thanks for playing!
-              </p>
-              <p className="text-2xl font-bold text-blue-600 mb-6">
-                Final Scores: 
-              </p>
-              <button
-                onClick={() => window.location.reload()} // Reload page to restart
-                className="px-6 py-3 bg-violet-600 text-white rounded-lg shadow hover:bg-violet-700 transition duration-200"
-              >
-                Play Again
-              </button>
-            </div>)}
+            )}
           </>
         )}
       </div>
