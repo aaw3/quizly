@@ -12,11 +12,16 @@ const GamePlay = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(30);
-  const [progress, setProgress] = useState<number>(1); // Question number
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [progress, setProgress] = useState<number>(0);
+  const [startTime, setStartTime] = useState<number | null>(null);
   const [score, setScore] = useState<number | null>(null);
+  const [showTransition, setShowTransition] = useState<boolean>(false);
+  const [questionResult, setQuestionResult] = useState<boolean | null>(null);
   const [gameOver, setGameOver] = useState<boolean>(false);
-  const [isPaused, setIsPaused] = useState<boolean>(false); // New Pause State
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [timesUp, setTimesUp] = useState<boolean>(false);
+  const [totalQuestions, setTotalQuestions] = useState<number | null>(null);
 
   useEffect(() => {
     if (!gameCode || !playerName) return;
@@ -45,16 +50,19 @@ const GamePlay = () => {
 
     ws.onmessage = (event) => {
       console.log("Received WebSocket message:", event.data);
+
       if (event.data === "[END]" || event.data === "[ALL_QUESTIONS_ANSWERED]") {
         setGameOver(true);
       } else if (event.data === "[PAUSE]") {
-        setIsPaused(true); // Pause the game
+        setIsPaused(true);
       } else if (event.data === "[RESUME]") {
-        setIsPaused(false); // Resume the game
+        setIsPaused(false);
       }
+
       try {
         const data = JSON.parse(event.data);
         console.log("Parsed data:", data);
+
         if (data.help) {
           setExplanation(data.help);
         }
@@ -62,6 +70,12 @@ const GamePlay = () => {
         if (data.question) {
           const questionText = data.question.question;
           const options = data.question.options;
+          const time = data.question.start_time;
+          setTotalQuestions(data.question.total_questions);
+
+          setStartTime(time);
+          const calculatedTimeLeft = time + 30 - Math.floor(Date.now() / 1000);
+          setTimeLeft(calculatedTimeLeft > 0 ? calculatedTimeLeft : 0);
 
           setQuestion(questionText);
           setAnswers(
@@ -71,10 +85,11 @@ const GamePlay = () => {
           );
 
           setSelectedAnswer(null);
-          setIsCorrect(null);
           setExplanation(null);
-          setTimeLeft(30);
           setProgress((prev) => prev + 1);
+
+          // Reset isCorrect here
+          setIsCorrect(null);
         } else if (data.attempt) {
           setIsCorrect(data.attempt.correct);
           if (data.attempt.final && !data.attempt.correct) {
@@ -96,43 +111,71 @@ const GamePlay = () => {
 
   // Handle answer submission
   const handleAnswerClick = (answer: string) => {
-    if (socket && !isPaused) {
+    if (socket && !isPaused && !showTransition) {
       socket.send(answer.split(":")[0].trim().toUpperCase());
       setSelectedAnswer(answer);
     }
   };
 
-  // Timer countdown
+  // Timer logic
   useEffect(() => {
-    if (timeLeft > 0 && selectedAnswer === null && !isPaused) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    if (timeLeft !== null && timeLeft > 0 && !isPaused && !showTransition) {
+      const timeoutDuration = timeLeft < 1 ? timeLeft * 1000 : 1000;
+
+      const timer = setTimeout(() => {
+        setTimeLeft((prev) => {
+          if (prev !== null) {
+            if (prev > 1) {
+              return prev - 1;
+            } else {
+              return 0;
+            }
+          }
+          return null;
+        });
+      }, timeoutDuration);
+
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && selectedAnswer === null && !isPaused) {
       setIsCorrect(false);
-      setExplanation(
-        "Time's up! The correct answer will be displayed shortly."
-      );
+      setTimesUp(true);
+      setExplanation(`The correct answer was ${answers}`);
     }
-  }, [timeLeft, selectedAnswer, isPaused]);
-
-  // Handle Pause/Resume
-  const togglePause = () => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(isPaused ? "RESUME" : "PAUSE");
-      setIsPaused(!isPaused);
-    }
-  };
+  }, [timeLeft, selectedAnswer, isPaused, showTransition]);
 
   // Handle "Try Again" button click
   const handleTryAgain = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send("TRY_AGAIN"); // Send a "TRY_AGAIN" message to the server
-      setSelectedAnswer(null); // Reset selected answer
-      setIsCorrect(null); // Reset correctness status
-      setExplanation(null); // Clear explanation
-      setTimeLeft(30); // Reset timer for the question
+      socket.send("TRY_AGAIN");
+      setSelectedAnswer(null);
+      setIsCorrect(null);
+      setExplanation(null);
     }
   };
+
+  // Handle Transition Screen Logic
+  useEffect(() => {
+    if (isCorrect === true) {
+      setQuestionResult(isCorrect);
+      setShowTransition(true);
+
+      const timer = setTimeout(() => {
+        setShowTransition(false);
+        setQuestionResult(null);
+
+        // Send a message to get the next question
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send("NEXT_QUESTION");
+        }
+
+        // Reset isCorrect here
+        setIsCorrect(null);
+        setSelectedAnswer(null);
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isCorrect, socket]);
 
   return (
     <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen">
@@ -158,8 +201,8 @@ const GamePlay = () => {
         <>
           {/* Pause Overlay */}
           {isPaused && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl px-8 py-6 text-center shadow-lg max-w-sm">
+            <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl px-10 py-8 text-center shadow-xl max-w-md">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                   Game Paused
                 </h2>
@@ -169,15 +212,35 @@ const GamePlay = () => {
               </div>
             </div>
           )}
+          {/* Transition Screen */}
+          {showTransition && (
+            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl px-10 py-8 text-center shadow-xl max-w-md">
+                <h2
+                  className={`text-3xl font-bold mb-4 ${
+                    questionResult ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {questionResult ? "Correct Answer!" : "Incorrect Answer!"}
+                </h2>
+                <p className="text-lg text-gray-700 mb-6">
+                  {questionResult
+                    ? "Great job! Get ready for the next question."
+                    : "Don't worry! Try the next one."}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Content */}
           <div className="relative z-10 container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-4xl">
             <div className="flex justify-between items-center w-full max-w-2xl mb-4">
               <p className="text-lg font-medium text-gray-700">
-                Question {progress}/10
+                Question {progress}/{totalQuestions}
               </p>
               <p className="text-lg font-medium text-gray-700">
-                Time Left: {timeLeft}s
+                Time Left:{" "}
+                {timeLeft !== null ? Math.max(Math.floor(timeLeft), 0) : 0}
               </p>
             </div>
             <div className="w-full max-w-2xl bg-gray-200 h-2 rounded-lg overflow-hidden mb-6">
@@ -203,7 +266,9 @@ const GamePlay = () => {
                         : "bg-red-500 text-white"
                       : "bg-blue-600 text-white hover:bg-blue-700"
                   }`}
-                  disabled={selectedAnswer !== null || isPaused}
+                  disabled={
+                    selectedAnswer !== null || isPaused || showTransition
+                  }
                 >
                   {answer.text}
                 </button>
@@ -212,16 +277,24 @@ const GamePlay = () => {
 
             {explanation && (
               <div className="bg-gray-100 shadow-lg rounded-xl px-8 py-6 w-full max-w-2xl mt-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">
-                  AI Explanation
-                </h3>
+                {timesUp ? (
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    Time's Up!
+                  </h3>
+                ) : (
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    AI Explanation
+                  </h3>
+                )}
                 <p className="text-lg text-gray-700">{explanation}</p>
-                <button
-                  onClick={handleTryAgain}
-                  className="bg-blue-600 px-6 py-3 text-white rounded-lg my-4"
-                >
-                  Try Again
-                </button>
+                {!timesUp && (
+                  <button
+                    onClick={handleTryAgain}
+                    className="bg-blue-600 px-6 py-3 text-white rounded-lg my-4"
+                  >
+                    Try Again
+                  </button>
+                )}
               </div>
             )}
           </div>
