@@ -17,3 +17,6 @@ venv/
 
 # Docker
 *.env
+
+# Quizzes dir
+quizzes/
