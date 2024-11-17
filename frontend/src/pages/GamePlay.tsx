@@ -13,13 +13,15 @@ const GamePlay = () => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
-  const [progress, setProgress] = useState(1); // Question number
+  const [progress, setProgress] = useState<number>(1); // Question number
+  const [score, SetScore] = useState<number | null>(null)
+  const [gameOver, setGameOver] = useState<boolean>(false);
 
   useEffect(() => {
     if (!gameCode || !playerName) return;
 
     const ws = new WebSocket(
-      `ws://localhost:8000/ws/game/${gameCode}/${playerName}`
+      `ws://${import.meta.env.HOST}:${import.meta.env.PORT}/ws/game/${gameCode}/${playerName}`
     );
 
     ws.onopen = () => {
@@ -40,33 +42,37 @@ const GamePlay = () => {
 
     ws.onmessage = (event) => {
       console.log("Received WebSocket message:", event.data);
+    
       try {
-        setQuestion(event.data);
         const data = JSON.parse(event.data);
         console.log("Parsed data:", data);
-
+    
         if (data.question) {
           // Handle new question
+          console.log("Handling question data...");
           const questionText = data.question.question;
           const options = data.question.options;
-
+    
           setQuestion(questionText);
           setAnswers(
             Object.entries(options).map(([key, value]) => ({
               text: `${key}: ${value}`,
             }))
           );
-
+    
           // Reset states for new question
           setSelectedAnswer(null);
           setIsCorrect(null);
           setExplanation(null);
-          setTimeLeft(30);
-          setProgress((prev) => prev + 1);
-        } else if (data.result) {
-          // Handle result after submitting an answer
-          setIsCorrect(data.result === "correct");
-          setExplanation(data.explanation || "");
+          setTimeLeft(30); // Reset the timer for the new question
+          setProgress((prev) => prev + 1); // Increment progress
+        } else if (data.attempt) {
+          // Handle attempt result after submitting an answer
+          console.log("Handling attempt data...");
+          setIsCorrect(data.attempt.correct);
+          if (data.attempt.final && !data.attempt.correct) {
+            setExplanation("The correct answer will be displayed soon.");
+          }
         } else {
           console.warn("Unhandled WebSocket message format:", data);
         }
@@ -74,7 +80,7 @@ const GamePlay = () => {
         console.error("Error processing WebSocket message:", err);
       }
     };
-
+    
     return () => {
       ws.close();
       setSocket(null);
@@ -104,9 +110,26 @@ const GamePlay = () => {
 
   return (
     <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen">
-      {/* Header */}
       <Header />
-
+      {gameOver ? (
+          // Game Over Screen
+          <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-2xl text-center">
+            <h2 className="text-4xl font-bold text-gray-800 mb-4">Game Over</h2>
+            <p className="text-lg text-gray-700 mb-6">
+              Thanks for playing, <span className="font-semibold">{playerName}</span>!
+            </p>
+            <p className="text-2xl font-bold text-blue-600 mb-6">
+              Your Final Score: {score} % Accuracy
+            </p>
+            <button
+              onClick={() => window.location.reload()} // Reload page to restart
+              className="px-6 py-3 bg-violet-600 text-white rounded-lg shadow hover:bg-violet-700 transition duration-200"
+            >
+              Play Again
+            </button>
+          </div>
+        ) : (
+          <>
       {/* Content */}
       <div className="relative z-10 container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-4xl">
         {/* Progress and Timer */}
@@ -180,6 +203,7 @@ const GamePlay = () => {
           </div>
         )}
       </div>
+      </>)}
     </section>
   );
 };

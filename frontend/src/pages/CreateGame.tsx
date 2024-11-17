@@ -33,7 +33,7 @@ const CreateGame = () => {
   const createGame = async () => {
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/api/creategame");
+      const response = await axios.post(`http://${import.meta.env.HOST}:${import.meta.env.PORT}/api/creategame`);
       const data = response.data;
 
       if (data.game_code) {
@@ -59,7 +59,7 @@ const CreateGame = () => {
   useEffect(() => {
     if (gameCode) {
       const newSocket = new WebSocket(
-        `ws://localhost:8000/ws/host/${gameCode}`
+        `ws://${import.meta.env.HOST}:${import.meta.env.PORT}/ws/host/${gameCode}`
       );
 
       newSocket.onopen = () => {
