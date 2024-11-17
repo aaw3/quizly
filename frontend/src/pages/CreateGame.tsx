@@ -270,7 +270,7 @@ const CreateGame = () => {
                   ) : (
                     <>
                       <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                        Game Metrics
+                        Leaderboard
                       </h3>
                       {metrics ? (
                         <div className="space-y-4">

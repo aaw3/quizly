@@ -67,13 +67,14 @@ const GamePlay = () => {
         if (data.help) {
           setExplanation(data.help);
         }
-
+        if (data.leaderboard) {
+          setFinalScore(data.leaderboard.score);
+        }
         if (data.question) {
           const questionText = data.question.question;
           const options = data.question.options;
           const time = data.question.start_time;
           setTotalQuestions(data.question.total_questions);
-          setFinalScore(data.score);
 
           setStartTime(time);
           const calculatedTimeLeft = time + 30 - Math.floor(Date.now() / 1000);
@@ -190,7 +191,7 @@ const GamePlay = () => {
             <span className="font-semibold">{playerName}</span>!
           </p>
           <p className="text-2xl font-bold text-blue-600 mb-6">
-            Your Final Score: {finalScore}
+            Your Final Score: {finalScore} pts
           </p>
           <button
             onClick={() => window.location.reload()}
