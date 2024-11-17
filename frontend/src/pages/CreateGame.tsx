@@ -28,6 +28,7 @@ const CreateGame = () => {
   const [copied, setCopied] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
+  const [gamePaused, setGamePaused] = useState<boolean>(false);
   const [gameEnded, setGameEnded] = useState<boolean>(false);
   const [quizMade, setQuizMade] = useState<boolean>(false);
 
@@ -94,6 +95,9 @@ const CreateGame = () => {
         }
         if (message === "end") {
           setGameEnded(true);
+        }
+        if (message === "pause") {
+          setGamePaused(true);
         }
       }
     } else {
@@ -196,11 +200,19 @@ const CreateGame = () => {
                       ) : (
                         <div className="flex flex-row space-x-4">
                           <button
-                            onClick={() => sendMessage("pause")}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
+                            onClick={() => {
+                              sendMessage(gamePaused ? "resume" : "pause");
+                              setGamePaused(!gamePaused);
+                            }}
+                            className={`px-6 py-3 ${
+                              gamePaused
+                                ? "bg-blue-600 hover:bg-blue-700"
+                                : "bg-blue-600 hover:bg-blue-700"
+                            } text-white rounded-lg shadow transition duration-200`}
                           >
-                            Pause Game
+                            {gamePaused ? "Resume Game" : "Pause Game"}
                           </button>
+
                           <button
                             onClick={() => sendMessage("end")}
                             className="px-6 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition duration-200"
@@ -304,9 +316,42 @@ const CreateGame = () => {
                 <p className="text-2xl font-bold text-blue-600 mb-6">
                   Final Scores:
                 </p>
+                <ul className="space-y-2">
+                  {metrics &&
+                    Object.entries(metrics.player_metrics).map(
+                      ([name, data], index) => (
+                        <li
+                          key={index}
+                          className="flex items-center justify-between text-lg text-gray-700 border-b border-gray-300 pb-2"
+                        >
+                          <div className="flex items-center">
+                            {/* Show GitHub avatar if available, otherwise fallback to initials */}
+                            {data.github_avatar ? (
+                              <img
+                                src={data.github_avatar}
+                                alt={`${name}'s avatar`}
+                                className="w-8 h-8 rounded-full mr-4"
+                              />
+                            ) : (
+                              <div
+                                className={`w-8 h-8 rounded-full mr-4 flex items-center justify-center text-white font-bold ${getPlayerColor(
+                                  name
+                                )}`}
+                              >
+                                {getPlayerInitials(name)}
+                              </div>
+                            )}
+                            {name}
+                          </div>
+                          <div>{data.score}</div>
+                        </li>
+                      )
+                    )}
+                </ul>
+
                 <button
                   onClick={() => window.location.reload()} // Reload page to restart
-                  className="px-6 py-3 bg-violet-600 text-white rounded-lg shadow hover:bg-violet-700 transition duration-200"
+                  className="px-6 py-3 bg-violet-600 text-white rounded-lg shadow hover:bg-violet-700 transition duration-200 mt-6"
                 >
                   Play Again
                 </button>
