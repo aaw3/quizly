@@ -1,5 +1,5 @@
 import {
-  FaBook,
+  FaBookmark,
   FaClipboardList,
   FaStickyNote,
   FaChartBar,
@@ -9,7 +9,7 @@ const LearningCards = () => {
   const cards = [
     {
       title: "AI-Driven Learning",
-      icon: <FaBook size={32} className="text-black" />,
+      icon: <FaBookmark size={32} className="text-black" />,
       bgColor: "bg-blue-600",
       textColor: "text-white",
       content: (
