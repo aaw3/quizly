@@ -367,6 +367,7 @@ def get_relative_leaderboard(players_data: dict, player_name: str):
         "ahead": None,
         "behind": None,
         "place": 0,
+        "score": player_score
     }
 
     # Iterate over other players to find the closest ahead and behind
