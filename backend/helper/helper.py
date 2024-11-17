@@ -38,20 +38,6 @@ def save_game_data(client: Redis, game_code: str, game_data: dict):
 def save_players_data(client: Redis, game_code: str, players_data: dict):
     client.set(f"game:{game_code}:players", json.dumps(players_data))
 
-def get_ai_response_cache(client: Redis, game_code: str):
-    question_cache = client.get(f"game:{game_code}:question_responses")
-    return json.loads(question_cache) if question_cache else {}
-
-def save_ai_response_cache(client: Redis, game_code: str, user_answer: str, question_id: int, response: str):
-    question_cache = get_ai_response_cache(client, game_code)
-    question_id = str(question_id)
-    if question_id not in question_cache:
-        question_cache[question_id] = {}
-
-    if user_answer not in question_cache[question_id]:
-        question_cache[question_id][user_answer] = response
-    client.set(f"game:{game_code}:question_responses", json.dumps(question_cache))
-
 # DEPRICATED
 #def set_game_status(client: Redis, game_code: str, status: str):
 #    game_data = get_game_data(client, game_code)
@@ -179,7 +165,6 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                     ranOutOfTime = False
                 elif waitingAfterQuestion:
                     # Wait for user for next question
-                    waitingAfterQuestion = False
                     await websocket.receive_text()
 
                     
@@ -268,7 +253,6 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                             save_players_data(client, game_code, players_data)
                             break
                         else:
-                            #if attempt == 0:
                             response = {"attempt": {"valid": True, "final": False, "correct": False}}
                             await websocket.send_text(json.dumps(response))
                             players_data = get_players_data(client, game_code)
@@ -281,12 +265,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                                 break
 
                         # Get help from AI:
-                        cached_help = get_ai_response_cache(client, game_code)
-                        if str(question_index) in cached_help and user_answer in cached_help[str(question_index)]:
-                            ai_response = cached_help[str(question_index)][user_answer]
-                        else:
-                            ai_response = get_ai_help(question["options"][correctAnswer], question["options"][user_answer], question["question"])
-                            save_ai_response_cache(client, game_code, user_answer, question_index, ai_response)
+                        ai_response = get_ai_help(question["options"][correctAnswer], question["options"][user_answer], question["question"])
                         response = {"help": ai_response}
                         await websocket.send_text(json.dumps(response))
 
@@ -368,22 +347,18 @@ def get_relative_leaderboard(players_data: dict, player_name: str):
     for otherPlayer in players_data.keys():
         if otherPlayer != player_name:
             otherPlayer_avg_score = get_player_avg_score(players_data, otherPlayer)
-            ahead_player = relative_leaderboard["ahead"]
-            behind_player = relative_leaderboard["behind"]
             if otherPlayer_avg_score > player_avg_score:
+                ahead_player = relative_leaderboard["ahead"]
+                behind_player = relative_leaderboard["behind"]
                 if ahead_player is None or otherPlayer_avg_score < players_data[relative_leaderboard["ahead"]]["avg_score"]:
-                    ahead_player = {}
                     ahead_player["player_name"] = otherPlayer
                     ahead_player["avg_score"] = otherPlayer_avg_score
                     ahead_player["github_avatar"] = players_data[otherPlayer]["github_avatar"]
-                    relative_leaderboard["ahead"] = ahead_player
             elif otherPlayer_avg_score < player_score:
                 if behind_player is None or otherPlayer_avg_score > players_data[relative_leaderboard["behind"]]["avg_score"]:
-                    behind_player = {}
                     behind_player["player_name"] = otherPlayer
                     behind_player["avg_score"] = otherPlayer_avg_score
                     behind_player["github_avatar"] = players_data[otherPlayer]["github_avatar"]
-                    relative_leaderboard["behind"] = behind_player
     relative_leaderboard["place"] = len([p for p in players_data.keys() if get_player_avg_score(players_data, p) > player_avg_score]) + 1
             
     return relative_leaderboard
