@@ -179,6 +179,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                     ranOutOfTime = False
                 elif waitingAfterQuestion:
                     # Wait for user for next question
+                    waitingAfterQuestion = False
                     await websocket.receive_text()
 
                     
@@ -267,6 +268,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                             save_players_data(client, game_code, players_data)
                             break
                         else:
+                            #if attempt == 0:
                             response = {"attempt": {"valid": True, "final": False, "correct": False}}
                             await websocket.send_text(json.dumps(response))
                             players_data = get_players_data(client, game_code)
