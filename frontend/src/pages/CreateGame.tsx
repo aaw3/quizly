@@ -178,9 +178,9 @@ const CreateGame = () => {
                   </p>
                   <div className="flex flex-row space-x-1">
                     {copied && (
-                      <p className="text-sm font-medium">
-                        Copied to clipboard!
-                      </p>
+                      <p className="text-gray-600 text-xs pt-[3px]">
+                      Copied to clipboard!
+                    </p>
                     )}
                     <button
                       onClick={copyToClipboard}
