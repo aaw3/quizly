@@ -22,6 +22,7 @@ const GamePlay = () => {
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [timesUp, setTimesUp] = useState<boolean>(false);
   const [totalQuestions, setTotalQuestions] = useState<number | null>(null);
+  const [finalScore, setFinalScore] = useState<number | null>(null);
 
   useEffect(() => {
     if (!gameCode || !playerName) return;
@@ -72,6 +73,7 @@ const GamePlay = () => {
           const options = data.question.options;
           const time = data.question.start_time;
           setTotalQuestions(data.question.total_questions);
+          setFinalScore(data.score);
 
           setStartTime(time);
           const calculatedTimeLeft = time + 30 - Math.floor(Date.now() / 1000);
@@ -139,7 +141,7 @@ const GamePlay = () => {
     } else if (timeLeft === 0 && selectedAnswer === null && !isPaused) {
       setIsCorrect(false);
       setTimesUp(true);
-      setExplanation(`The correct answer was ${answers}`);
+      setExplanation(`Incorrect`);
     }
   }, [timeLeft, selectedAnswer, isPaused, showTransition]);
 
@@ -188,7 +190,7 @@ const GamePlay = () => {
             <span className="font-semibold">{playerName}</span>!
           </p>
           <p className="text-2xl font-bold text-blue-600 mb-6">
-            Your Final Score: {score} pts
+            Your Final Score: {finalScore}
           </p>
           <button
             onClick={() => window.location.reload()}
