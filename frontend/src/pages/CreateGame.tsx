@@ -60,7 +60,7 @@ const CreateGame = () => {
   useEffect(() => {
     if (gameCode) {
       const newSocket = new WebSocket(
-        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/${import.meta.env.VITE_WS_PROTOCOL}/host/${gameCode}`
+        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/host/${gameCode}`
       );
 
       newSocket.onopen = () => {

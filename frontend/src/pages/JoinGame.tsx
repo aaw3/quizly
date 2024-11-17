@@ -28,7 +28,7 @@ const JoinGame = () => {
 
       // Establish WebSocket connection
       const socket = new WebSocket(
-        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/${import.meta.env.VITE_WS_PROTOCOL}/game/${localGameCode}/${localPlayerName}`
+        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/game/${localGameCode}/${localPlayerName}`
       );
 
       socket.onopen = () => {

@@ -22,7 +22,7 @@ const GamePlay = () => {
     if (!gameCode || !playerName) return;
 
     const ws = new WebSocket(
-      `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/${import.meta.env.VITE_WS_PROTOCOL}/game/${gameCode}/${playerName}`
+      `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/game/${gameCode}/${playerName}`
     );
 
     ws.onopen = () => {
