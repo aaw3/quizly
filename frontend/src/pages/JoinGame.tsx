@@ -132,9 +132,18 @@ const JoinGame = () => {
                   Hang tight! The host will start the game soon.
                 </p>
                 <div className="flex items-center justify-center space-x-2 pb-4">
-                  <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
-                  <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce delay-2000"></div>
-                  <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce delay-3000"></div>
+                  <div
+                    className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
+                    style={{ animationDelay: "0s" }}
+                  ></div>
+                  <div
+                    className="w-3 h-3 bg-purple-600 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                  <div
+                    className="w-3 h-3 bg-purple-700 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.4s" }}
+                  ></div>
                 </div>
               </div>
             </div>
