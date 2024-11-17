@@ -32,7 +32,10 @@ const JoinGame = () => {
       );
 
       socket.onopen = () => {
-        console.log("WebSocket connection established for player:", localPlayerName);
+        console.log(
+          "WebSocket connection established for player:",
+          localPlayerName
+        );
       };
 
       socket.onmessage = (event) => {
@@ -42,8 +45,11 @@ const JoinGame = () => {
           const data = event.data;
 
           if (data === "[START]") {
-            console.log("Game has started for player, navigating to GamePlay...");
+            console.log(
+              "Game has started for player, navigating to GamePlay..."
+            );
             setIsGameActive(true); // Update game context to active
+            socket.close();
             navigate("/gameplay", { replace: true }); // Navigate to GamePlay page
           } else {
             console.log("Unhandled WebSocket message:", data);
@@ -57,7 +63,10 @@ const JoinGame = () => {
         console.log("WebSocket connection closed for player:", localPlayerName);
       };
     } catch (err: any) {
-      setError(err.response?.data?.message || "Error joining game. Check your game code.");
+      setError(
+        err.response?.data?.message ||
+          "Error joining game. Check your game code."
+      );
     }
   };
 
@@ -75,7 +84,8 @@ const JoinGame = () => {
               Join a <span className="text-violet-600">Game</span>
             </h1>
             <p className="px-6 mt-6 mb-12 text-lg text-gray-700 sm:px-12 lg:px-20">
-              Enter a game code to join your friends and compete in fun, interactive quizzes powered by AI.
+              Enter a game code to join your friends and compete in fun,
+              interactive quizzes powered by AI.
             </p>
 
             <div className="w-full max-w-md space-y-4">
@@ -107,16 +117,19 @@ const JoinGame = () => {
         ) : (
           <>
             <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800 mb-8">
-              Welcome, <span className="text-violet-600">{localPlayerName}</span>!
+              Welcome,{" "}
+              <span className="text-violet-600">{localPlayerName}</span>!
             </h1>
             <div className="bg-white shadow-lg rounded-xl px-8 py-6 w-full max-w-lg text-left">
               <div className="space-y-4">
                 <p className="text-lg text-gray-700 font-medium">
                   <strong>Game Code:</strong>{" "}
-                  <span className="font-mono text-blue-600">{localGameCode}</span>
+                  <span className="font-mono text-blue-600">
+                    {localGameCode}
+                  </span>
                 </p>
                 <p className="text-lg text-gray-700">
-                Hang tight! The host will start the game soon.
+                  Hang tight! The host will start the game soon.
                 </p>
                 <div className="flex items-center justify-center space-x-2 pb-4">
                   <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>

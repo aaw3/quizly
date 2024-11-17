@@ -16,16 +16,16 @@ const GameNotFound = () => {
 
         <div className="w-full max-w-md space-x-4">
           <Link
-            to="/"
+            to="/joingame"
             className="w-full px-6 py-4 text-lg font-medium rounded-lg bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition duration-200"
           >
-            Go to Home
+            Join Game
           </Link>
           <Link
-            to="/creategame"
+            to="/"
             className="w-full px-6 py-4 text-lg font-medium rounded-lg bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition duration-200"
           >
-            Create a New Game
+            Go to Home
           </Link>
         </div>
       </div>

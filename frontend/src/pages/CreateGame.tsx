@@ -9,7 +9,7 @@ interface PlayerMetric {
   correct_questions: number[];
   incorrect_questions: number[];
   remaining_questions: number[];
-  github_avatar?: string; 
+  github_avatar?: string;
 }
 
 interface GameMetrics {
@@ -22,6 +22,7 @@ interface GameMetrics {
 
 const CreateGame = () => {
   const [gameCode, setGameCode] = useState<string | null>(null);
+  const [error, setError] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [players, setPlayers] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<GameMetrics | null>(null);
@@ -57,7 +58,6 @@ const CreateGame = () => {
 
   useEffect(() => {
     if (gameCode) {
-      // Establish WebSocket connection
       const newSocket = new WebSocket(
         `ws://localhost:8000/ws/host/${gameCode}`
       );
@@ -73,14 +73,11 @@ const CreateGame = () => {
           const data = JSON.parse(event.data);
 
           if (data.metrics) {
-            // Update metrics and players
             setMetrics(data.metrics);
-
-            // Extract player names from player_metrics
             const playerNames = Object.keys(data.metrics.player_metrics);
             setPlayers(playerNames);
           } else if (data.type === "info" && data.message === "[START]") {
-            setGameStarted(true); // Game has started
+            setGameStarted(true);
           } else {
             console.error("Unexpected message format:", data);
           }
@@ -94,15 +91,23 @@ const CreateGame = () => {
       };
 
       return () => {
-        newSocket.close(); // Cleanup WebSocket on component unmount
+        newSocket.close();
       };
     }
   }, [gameCode]);
 
   const sendMessage = (message: string) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(message);
-      console.log("Message sent:", message);
+      if (message === "start" && (!players || players.length === 0)) {
+        setError(true);
+        setTimeout(() => setError(false), 2000);
+      } else {
+        socket.send(message);
+        console.log("Message sent:", message);
+        if (message === "start") {
+          setGameStarted(true);
+        }
+      }
     } else {
       console.error("WebSocket is not open");
     }
@@ -124,8 +129,16 @@ const CreateGame = () => {
 
   // Helper to generate a consistent color based on the player's name
   const getPlayerColor = (name: string): string => {
-    const hash = name.split("").reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-    const colors = ["bg-red-500", "bg-green-500", "bg-blue-500", "bg-yellow-500", "bg-purple-500"];
+    const hash = name
+      .split("")
+      .reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+    const colors = [
+      "bg-red-500",
+      "bg-green-500",
+      "bg-blue-500",
+      "bg-yellow-500",
+      "bg-purple-500",
+    ];
     return colors[hash % colors.length];
   };
 
@@ -191,12 +204,29 @@ const CreateGame = () => {
                   </a>
                 </p>
                 <div className="flex justify-center mt-6">
-                  <button
-                    onClick={() => sendMessage("start")}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
-                  >
-                    Start Game
-                  </button>
+                  {gameStarted === false ? (
+                    <button
+                      onClick={() => sendMessage("start")}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
+                    >
+                      Start Game
+                    </button>
+                  ) : (
+                    <div className="flex flex-row space-x-4">
+                      <button
+                        onClick={() => sendMessage("pause")}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-200"
+                      >
+                        Pause Game
+                      </button>
+                      <button
+                        onClick={() => sendMessage("end")}
+                        className="px-6 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition duration-200"
+                      >
+                        End Game
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -270,6 +300,11 @@ const CreateGame = () => {
                 </>
               )}
             </div>
+            {error && (
+              <p className="text-red-500 mt-4">
+                You cannot start the game without players!
+              </p>
+            )}
           </>
         )}
       </div>

@@ -9,7 +9,7 @@ const LearningCards = () => {
   const cards = [
     {
       title: "AI-Driven Learning",
-      icon: <FaBook size={32} className="text-white" />,
+      icon: <FaBook size={32} className="text-black" />,
       bgColor: "bg-blue-600",
       textColor: "text-white",
       content: (
@@ -21,7 +21,7 @@ const LearningCards = () => {
     },
     {
       title: "Study Smarter",
-      icon: <FaClipboardList size={32} className="text-white" />,
+      icon: <FaClipboardList size={32} className="text-black" />,
       bgColor: "bg-violet-600",
       textColor: "text-white",
       content: (
@@ -33,7 +33,7 @@ const LearningCards = () => {
     },
     {
       title: "AI-Generated Questions",
-      icon: <FaStickyNote size={32} className="text-white" />,
+      icon: <FaStickyNote size={32} className="text-black" />,
       bgColor: "bg-blue-500",
       textColor: "text-white",
       content: (
@@ -45,7 +45,7 @@ const LearningCards = () => {
     },
     {
       title: "Track Your Progress",
-      icon: <FaChartBar size={32} className="text-white" />,
+      icon: <FaChartBar size={32} className="text-black" />,
       bgColor: "bg-violet-500",
       textColor: "text-white",
       content: (
