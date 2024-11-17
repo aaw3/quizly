@@ -1,31 +1,91 @@
 import { useState, useEffect } from "react";
+import { useGameContext } from "../components/GameContext";
 import Header from "../components/Header";
 
 const GamePlay = () => {
+  const { gameCode, playerName } = useGameContext();
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [question, setQuestion] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<
+    { text: string; isCorrect?: boolean }[]
+  >([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(30); // Timer (30 seconds)
-  const [progress, setProgress] = useState(3); // Progress (e.g., Question 3/10)
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [progress, setProgress] = useState(1); // Question number
 
-  const question = "What is the capital of France?";
-  const answers = [
-    { text: "Berlin", isCorrect: false },
-    { text: "Madrid", isCorrect: false },
-    { text: "Paris", isCorrect: true },
-    { text: "Rome", isCorrect: false },
-  ];
-  const category = "Geography";
-  // Handle answer
-  const handleAnswerClick = (answer: { text: string; isCorrect: boolean }) => {
-    setSelectedAnswer(answer.text);
-    setIsCorrect(answer.isCorrect);
-    if (!answer.isCorrect) {
-      setExplanation(
-        "The capital of France is Paris. Berlin is the capital of Germany."
-      );
-    } else {
-      setExplanation(null);
+  useEffect(() => {
+    if (!gameCode || !playerName) return;
+
+    const ws = new WebSocket(
+      `ws://localhost:8000/ws/game/${gameCode}/${playerName}`
+    );
+
+    ws.onopen = () => {
+      console.log("WebSocket connection established.");
+      setSocket(ws);
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      ws.close();
+      setSocket(null);
+    };
+
+    ws.onclose = (event) => {
+      console.warn("WebSocket connection closed:", event);
+      setSocket(null);
+    };
+
+    ws.onmessage = (event) => {
+      console.log("Received WebSocket message:", event.data);
+      try {
+        setQuestion(event.data);
+        const data = JSON.parse(event.data);
+        console.log("Parsed data:", data);
+
+        if (data.question) {
+          // Handle new question
+          const questionText = data.question.question;
+          const options = data.question.options;
+
+          setQuestion(questionText);
+          setAnswers(
+            Object.entries(options).map(([key, value]) => ({
+              text: `${key}: ${value}`,
+            }))
+          );
+
+          // Reset states for new question
+          setSelectedAnswer(null);
+          setIsCorrect(null);
+          setExplanation(null);
+          setTimeLeft(30);
+          setProgress((prev) => prev + 1);
+        } else if (data.result) {
+          // Handle result after submitting an answer
+          setIsCorrect(data.result === "correct");
+          setExplanation(data.explanation || "");
+        } else {
+          console.warn("Unhandled WebSocket message format:", data);
+        }
+      } catch (err) {
+        console.error("Error processing WebSocket message:", err);
+      }
+    };
+
+    return () => {
+      ws.close();
+      setSocket(null);
+    };
+  }, [gameCode, playerName]);
+
+  // Handle answer submission
+  const handleAnswerClick = (answer: string) => {
+    if (socket) {
+      socket.send(JSON.stringify({ answer }));
+      setSelectedAnswer(answer);
     }
   };
 
@@ -36,7 +96,9 @@ const GamePlay = () => {
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && selectedAnswer === null) {
       setIsCorrect(false);
-      setExplanation("Time's up! The correct answer is Paris.");
+      setExplanation(
+        "Time's up! The correct answer will be displayed shortly."
+      );
     }
   }, [timeLeft, selectedAnswer]);
 
@@ -45,27 +107,12 @@ const GamePlay = () => {
       {/* Header */}
       <Header />
 
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <svg
-          className="absolute bottom-0 left-0 w-full"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 1440 400"
-          preserveAspectRatio="none"
-        >
-          <path
-            fill="#e5e7eb"
-            d="M0,128L48,160C96,192,192,256,288,256C384,256,480,192,576,160C672,128,768,128,864,160C960,192,1056,256,1152,272C1248,288,1344,256,1392,240L1440,224L1440,400L1392,400C1344,400,1248,400,1152,400C1056,400,960,400,864,400C768,400,672,400,576,400C480,400,384,400,288,400C192,400,96,400,48,400L0,400Z"
-          />
-        </svg>
-      </div>
-
       {/* Content */}
       <div className="relative z-10 container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-4xl">
         {/* Progress and Timer */}
         <div className="flex justify-between items-center w-full max-w-2xl mb-4">
           <p className="text-lg font-medium text-gray-700">
-            Category: {category}
+            Question {progress}/10
           </p>
           <p className="text-lg font-medium text-gray-700">
             Time Left: {timeLeft}s
@@ -88,7 +135,7 @@ const GamePlay = () => {
           {answers.map((answer, index) => (
             <button
               key={index}
-              onClick={() => handleAnswerClick(answer)}
+              onClick={() => handleAnswerClick(answer.text)}
               className={`w-full px-6 py-3 text-lg font-medium rounded-lg shadow transition duration-200 ${
                 selectedAnswer === answer.text
                   ? isCorrect
@@ -96,7 +143,7 @@ const GamePlay = () => {
                     : "bg-red-500 text-white"
                   : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
-              disabled={selectedAnswer !== null} // Disable buttons after selecting an answer
+              disabled={selectedAnswer !== null}
             >
               {answer.text}
             </button>
@@ -113,7 +160,7 @@ const GamePlay = () => {
           </div>
         )}
 
-        {/* Correct/Incorrect Feedback and Try Again */}
+        {/* Correct/Incorrect Feedback */}
         {isCorrect !== null && (
           <div className="mt-8 flex flex-row items-center space-x-4 justify-center">
             <div
@@ -123,18 +170,13 @@ const GamePlay = () => {
             >
               {isCorrect ? "Correct!" : "Incorrect!"}
             </div>
-            {!isCorrect && (
-              <button
-                onClick={() => {
-                  setSelectedAnswer(null);
-                  setIsCorrect(null);
-                  setExplanation(null);
-                }}
-                className="px-6 py-3 text-lg font-medium rounded-lg bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition duration-200"
-              >
-                Try Again
-              </button>
-            )}
+          </div>
+        )}
+        {socket === null && (
+          <div className="text-center mt-10">
+            <p className="text-red-500">
+              Connection to the game failed. Retrying...
+            </p>
           </div>
         )}
       </div>

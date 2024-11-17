@@ -13,7 +13,7 @@ const LearningCards = () => {
       bgColor: "bg-blue-600",
       textColor: "text-white",
       content: (
-        <p className="text-sm font-medium">
+        <p className="text-lg font-medium">
           Get personalized feedback when you miss a question. Our AI identifies
           gaps and provides targeted help to boost your understanding.
         </p>
@@ -25,7 +25,7 @@ const LearningCards = () => {
       bgColor: "bg-violet-600",
       textColor: "text-white",
       content: (
-        <p className="text-sm font-medium">
+        <p className="text-lg font-medium">
           Generate custom study guides with AI. Focus on topics you need the
           most help with, and learn efficiently.
         </p>
@@ -37,7 +37,7 @@ const LearningCards = () => {
       bgColor: "bg-blue-500",
       textColor: "text-white",
       content: (
-        <p className="text-sm font-medium">
+        <p className="text-lg font-medium">
           Let AI do the work! Automatically create challenging, tailored
           questions to enhance your learning experience.
         </p>
@@ -49,7 +49,7 @@ const LearningCards = () => {
       bgColor: "bg-violet-500",
       textColor: "text-white",
       content: (
-        <p className="text-sm font-medium">
+        <p className="text-lg font-medium">
           Monitor your performance with detailed reports and progress tracking.
           Watch your skills improve over time!
         </p>
@@ -63,7 +63,7 @@ const LearningCards = () => {
         {cards.map((card, index) => (
           <div
             key={index}
-            className={`rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-transform duration-300 p-6 max-w-[320px] min-h-[450px] flex flex-col justify-between ${
+            className={`rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-transform duration-300 p-6 max-w-[320px] min-h-[350px] flex flex-col justify-between ${
               card.bgColor
             } ${card.textColor || "text-gray-900"}`}
           >
