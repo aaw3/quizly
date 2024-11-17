@@ -93,7 +93,7 @@ const GamePlay = () => {
         } else if (data.attempt) {
           setIsCorrect(data.attempt.correct);
           if (data.attempt.final && !data.attempt.correct) {
-            setExplanation("The correct answer will be displayed soon.");
+            setExplanation("Incorrect again.");
           }
         } else {
           console.warn("Unhandled WebSocket message format:", data);
