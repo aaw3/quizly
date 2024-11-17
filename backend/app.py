@@ -27,7 +27,7 @@ active_hosts = {}
 
 
 # Create Game
-@app.post("/creategame")
+@app.post("/api/creategame")
 async def create_game():
     game_code = generate_game_code()
     questions = load_questions()
@@ -41,7 +41,7 @@ async def create_game():
 
 
 # Join Game
-@app.post("/joingame/{game_code}")
+@app.post("/api/joingame/{game_code}")
 async def join_game(game_code: str, player_name: str):
     game_data = get_game_data(client, game_code)
     if not game_data:
