@@ -335,8 +335,9 @@ const CreateGame = () => {
                 </p>
                 <ul className="space-y-2">
                   {metrics &&
-                    Object.entries(metrics.player_metrics).map(
-                      ([name, data], index) => (
+                    Object.entries(metrics.player_metrics)
+                      .sort(([, a], [, b]) => b.score - a.score) // Sort by score in descending order
+                      .map(([name, data], index) => (
                         <li
                           key={index}
                           className="flex items-center justify-between text-lg text-gray-700 border-b border-gray-300 pb-2"
@@ -362,8 +363,7 @@ const CreateGame = () => {
                           </div>
                           <div>{data.score}</div>
                         </li>
-                      )
-                    )}
+                      ))}
                 </ul>
 
                 <button
