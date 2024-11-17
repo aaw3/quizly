@@ -18,7 +18,7 @@ const JoinGame = () => {
     try {
       // API Call to join game
       const response = await axios.post(
-        `http://localhost:8000/joingame/${localGameCode}?player_name=${localPlayerName}`
+        `http://localhost:8000/api/joingame/${localGameCode}?player_name=${localPlayerName}`
       );
 
       // Update context with game data

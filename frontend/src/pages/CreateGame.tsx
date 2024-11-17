@@ -33,7 +33,7 @@ const CreateGame = () => {
   const createGame = async () => {
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/creategame");
+      const response = await axios.post("http://localhost:8000/api/creategame");
       const data = response.data;
 
       if (data.game_code) {
