@@ -16,7 +16,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost",
-    "http://localhost:5173" # This one is essential
+    "http://localhost:5173", # This one is essential
     "http://quizly.aaw3.dev", # Add hosted server
 ]
 
