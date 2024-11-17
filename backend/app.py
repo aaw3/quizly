@@ -61,7 +61,6 @@ async def join_game(game_code: str, player_name: str):
     register_player(client, game_code, player_name, game_data["questions"])
     #save_players_data(client, game_code, players_data)
     logging.info(f"Player '{player_name}' added to game '{game_code}'. Updated game data: {game_data}")
-    logging.error("GAME INFO:", str(game_data))
 
     return {"message": "Joined game", "game_code": game_code, "player_name": player_name}
 
