@@ -213,7 +213,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                                 break
 
                         # Get help from AI:
-                        ai_response = get_ai_help(correctAnswer, userAnswer, question["question"])
+                        ai_response = get_ai_help(question["options"][correctAnswer], question["options"][userAnswer], question["question"])
                         response = {"help": ai_response}
                         await websocket.send_text(json.dumps(response))
 
@@ -286,7 +286,7 @@ def get_relative_leaderboard(players_data: dict, player_name: str):
                     relative_leaderboard["ahead"]["github_avatar"] = players_data[otherPlayer]["github_avatar"]
             elif otherPlayer_avg_score < player_score:
                 if relative_leaderboard["behind"] is None or otherPlayer_avg_score > players_data[relative_leaderboard["behind"]]["avg_score"]:
-                    relative_leaderboard["behind"]["player_name"] = name
+                    relative_leaderboard["behind"]["player_name"] = otherPlayer
                     relative_leaderboard["behind"]["avg_score"] = otherPlayer_avg_score
                     relative_leaderboard["behind"]["github_avatar"] = players_data[otherPlayer]["github_avatar"]
             
