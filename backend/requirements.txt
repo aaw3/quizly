@@ -6,3 +6,4 @@ asyncio
 PyYAML
 groq
 requests
+pypdf
