@@ -38,7 +38,7 @@ const Header: React.FC = () => {
             to="/"
             className="text-base hover:underline underline-offset-4 transition duration-200"
           >
-            Your Games
+            My Games
           </Link>
           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
             <span className="text-sm font-medium text-gray-700">LS</span>
