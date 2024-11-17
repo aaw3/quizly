@@ -49,11 +49,13 @@ const GamePlay = () => {
         setIsPaused(true); // Pause the game
       } else if (event.data === "[RESUME]") {
         setIsPaused(false); // Resume the game
-      }
-
+      } 
       try {
         const data = JSON.parse(event.data);
         console.log("Parsed data:", data);
+        if (data.help){
+          setExplanation(data.help);
+        }
 
         if (data.question) {
           const questionText = data.question.question;
@@ -127,7 +129,7 @@ const GamePlay = () => {
             Thanks for playing, <span className="font-semibold">{playerName}</span>!
           </p>
           <p className="text-2xl font-bold text-blue-600 mb-6">
-            Your Final Score: {score} %
+            Your Final Score: {score} pts
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -193,6 +195,7 @@ const GamePlay = () => {
               <div className="bg-gray-100 shadow-lg rounded-xl px-8 py-6 w-full max-w-2xl mt-8">
                 <h3 className="text-xl font-bold text-gray-800 mb-2">AI Explanation</h3>
                 <p className="text-lg text-gray-700">{explanation}</p>
+                <button className="bg-blue-600 px-6 py-3 text-white rounded-lg my-4">Try Again</button>
               </div>
             )}
           </div>
