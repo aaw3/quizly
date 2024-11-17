@@ -28,7 +28,7 @@ const QuizPromptInput = () => {
 
   return (
     <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen pb-32">
-      <div className="container mx-auto flex flex-col items-center px-4 text-center md:py-20 md:px-10 lg:px-32 xl:max-w-4xl">
+      <div className="container mx-auto flex flex-col items-center px-4 text-center md:px-10 lg:px-32 xl:max-w-4xl">
         {/* Title */}
         <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
           Generate a <span className="text-violet-600">Quiz</span>
