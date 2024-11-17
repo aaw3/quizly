@@ -262,6 +262,9 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
 # Utility Functions
 def get_player_avg_score(players_data: dict, player_name: str):
     player_score = players_data[player_name]["score"]
+    question_total = len(players_data[player_name]["correct_questions"]) + len(players_data[player_name]["incorrect_questions"])
+    if question_total == 0:
+        return 0
     player_avg_score = player_score / (len(players_data[player_name]["correct_questions"]) + len(players_data[player_name]["incorrect_questions"]))
     return player_avg_score
 
@@ -393,6 +396,11 @@ async def manage_host_session(websocket: WebSocket, client: Redis, game_code: st
         logging.info("Host WebSocket connection closed.")
 
     async def retrieve_game_metrics():
+        # Send metrics when host joins if they reconnect
+        player_metrics = get_players_metrics(get_players_data(client, game_code))
+        response = {"metrics": player_metrics}
+        await websocket.send_text(json.dumps(response))
+
         try:
             num_players = len(get_players_data(client, game_code))
             while True:
