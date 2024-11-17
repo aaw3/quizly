@@ -156,7 +156,7 @@ const CreateGame = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <p className="text-lg text-gray-700 font-medium">
-                        Game Code:{" "}
+                        <span className="font-bold">Game Code: </span>
                         <span className="font-mono text-blue-600">
                           {gameCode}
                         </span>
@@ -178,9 +178,8 @@ const CreateGame = () => {
                     </div>
 
                     <p className="text-lg text-gray-700">
-                      Share this join link:{" "}
                       <a
-                        className="underline text-blue-500 hover:text-blue-700"
+                        className="underline font-bold text-blue-500 hover:text-blue-700"
                         href={`http://localhost:5173/joingame`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -281,9 +280,27 @@ const CreateGame = () => {
                                 key={index}
                                 className="flex justify-between items-center bg-gray-100 px-6 py-4 rounded-lg shadow"
                               >
-                                <span className="font-medium text-gray-700">
-                                  {name}
-                                </span>
+                                <div className="flex items-center">
+                                  {/* Show GitHub avatar if available, otherwise initials */}
+                                  {data.github_avatar ? (
+                                    <img
+                                      src={data.github_avatar}
+                                      alt={`${name}'s avatar`}
+                                      className="w-8 h-8 rounded-full mr-4"
+                                    />
+                                  ) : (
+                                    <div
+                                      className={`w-8 h-8 rounded-full mr-4 flex items-center justify-center text-white font-bold ${getPlayerColor(
+                                        name
+                                      )}`}
+                                    >
+                                      {getPlayerInitials(name)}
+                                    </div>
+                                  )}
+                                  <span className="font-medium text-gray-700">
+                                    {name}
+                                  </span>
+                                </div>
                                 <span className="font-bold text-blue-600">
                                   {data.score} pts
                                 </span>
