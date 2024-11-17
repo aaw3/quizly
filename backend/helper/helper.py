@@ -12,6 +12,7 @@ import asyncio
 import time
 from ai import *
 from github import *
+import math
 
 # Constants for game status
 STATUS_WAITING = "WAITING"
@@ -156,6 +157,13 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                     break
 
 
+                if (players_data[player_name]["question_start_time"] is not None and players_data[player_name]["question_start_time"] + 30 - time.time() <= 0):
+                    players_data[player_name]["incorrect_questions"].append(players_data[player_name]["current_question_index"])
+                    players_data[player_name]["current_question_index"] = -1
+                    players_data[player_name]["question_attempt"] = 0
+                    players_data[player_name]["question_start_time"] = None
+                    save_players_data(client, game_code, players_data)
+
                 if players_data[player_name]["current_question_index"] == -1:
                     question_index = questions_remaining.pop()
                     question = await get_random_question(game_data, question_index)
@@ -172,21 +180,37 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                 # Don't send correct answer to player
                 del question["answer"]
 
+                question['start_time'] = players_data[player_name]["question_start_time"]
                 response = {"question": question}
                 await websocket.send_text(json.dumps(response))
                 logging.info(f"Sent question to player '{player_name}': {question}")
 
                 try:
-                    pts = 1000
+                    points = 1000
+                    wrong_multiplier = 0.65
+                    time_multiplier = 0.75
                     saved_attempts = players_data[player_name]["question_attempt"]
+                    ranOutOfTime = False
                     for attempt in range(saved_attempts, NUM_ATTEMPTS):
                         # Create loop waiting for input, in paused state nothing happens
                         # If user sends an input after pause ends, we grab game_data so it can be processed on resume
                         while True:
-                            userAnswer = await websocket.receive_text()
+                            user_answer = ""
+                            try:
+                                user_answer = await asyncio.wait_for(websocket.receive_text(), timeout=players_data[player_name]["question_start_time"] + 30 - time.time())
+                            except asyncio.TimeoutError:
+                                if players_data[player_name]["question_start_time"] + 30 - time.time() <= 0:
+                                    players_data[player_name]["incorrect_questions"].append(question_index)
+                                    players_data[player_name]["current_question_index"] = -1
+                                    players_data[player_name]["question_attempt"] = 0
+                                    players_data[player_name]["question_start_time"] = None
+                                    save_players_data(client, game_code, players_data)
+                                    ranOutOfTime = True
+                                    break
+
                             # Check if answer is valid
-                            userAnswer = validate_answer(userAnswer, question["options"])
-                            if userAnswer is None:
+                            user_answer = validate_answer(user_answer, question["options"])
+                            if user_answer is None:
                                 response = {"attempt": {"valid": False, "final": False, "correct": False, "points": 0}}
                                 await websocket.send_text(json.dumps(response))
                                 continue
@@ -195,9 +219,13 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                                 continue
                             else:
                                 break
+
+                        if ranOutOfTime:
+                            break
                         # First answer
-                        if check_answer(correctAnswer, userAnswer):
-                            response = {"attempt": {"valid": True, "final": True, "correct": True, "points": pts/(attempt + 1)}}
+                        if check_answer(correctAnswer, user_answer):
+                            points = get_score(points, attempt, wrong_multiplier, time_multiplier, players_data[player_name]["question_start_time"])
+                            response = {"attempt": {"valid": True, "final": True, "correct": True, "points": points}}
                             await websocket.send_text(json.dumps(response))
                             players_data = get_players_data(client, game_code)
                             players_data[player_name]["correct_questions"].append(question_index)
@@ -209,18 +237,19 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                             players_data = get_players_data(client, game_code)
                             players_data[player_name]["question_attempt"] += 1
                             if attempt == 1:
-                                response = {"attempt": {"final": True, "correct": False, "points": 0, "answer": correctAnswer}}
+                                points = 0
+                                response = {"attempt": {"final": True, "correct": False, "points": points, "answer": correctAnswer}}
                                 players_data[player_name]["incorrect_questions"].append(question_index)
                                 save_players_data(client, game_code, players_data)
                                 break
 
                         # Get help from AI:
-                        ai_response = get_ai_help(question["options"][correctAnswer], question["options"][userAnswer], question["question"])
+                        ai_response = get_ai_help(question["options"][correctAnswer], question["options"][user_answer], question["question"])
                         response = {"help": ai_response}
                         await websocket.send_text(json.dumps(response))
 
                     players_data = get_players_data(client, game_code)
-                    players_data[player_name]["score"] += pts/(attempt + 1)
+                    players_data[player_name]["score"] += points
                     players_data[player_name]["current_question_index"] = -1
                     players_data[player_name]["question_attempt"] = 0
                     players_data[player_name]["question_start_time"] = None
@@ -262,6 +291,20 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
 
 
 # Utility Functions
+def get_score(max_points, attempts, wrong_multiplier, time_multiplier, question_start_time, time_limit=30, scaling_factor=.025):
+    # Calculate score based on time taken to answer
+    time_taken = time.time() - question_start_time
+    time_taken = min(time_taken, time_limit)
+
+    time_coef = time_multiplier + (1-time_multiplier) * ((math.log(1+scaling_factor*(time_limit-time_taken))/math.log(1+scaling_factor*time_limit)))
+    wrong_coef = wrong_multiplier ** attempts
+
+    score = max_points * max(wrong_coef * time_coef, 0)
+
+    return int(round(score))
+    
+    
+
 def get_player_avg_score(players_data: dict, player_name: str):
     player_score = players_data[player_name]["score"]
     question_total = len(players_data[player_name]["correct_questions"]) + len(players_data[player_name]["incorrect_questions"])
@@ -282,15 +325,17 @@ def get_relative_leaderboard(players_data: dict, player_name: str):
         if otherPlayer != player_name:
             otherPlayer_avg_score = get_player_avg_score(players_data, otherPlayer)
             if otherPlayer_avg_score > player_avg_score:
-                if relative_leaderboard["ahead"] is None or otherPlayer_avg_score < players_data[relative_leaderboard["ahead"]]["avg_score"]:
-                    relative_leaderboard["ahead"]["player_name"] = otherPlayer
-                    relative_leaderboard["ahead"]["avg_score"] = otherPlayer_avg_score
-                    relative_leaderboard["ahead"]["github_avatar"] = players_data[otherPlayer]["github_avatar"]
+                ahead_player = relative_leaderboard["ahead"]
+                behind_player = relative_leaderboard["behind"]
+                if ahead_player is None or otherPlayer_avg_score < players_data[relative_leaderboard["ahead"]]["avg_score"]:
+                    ahead_player["player_name"] = otherPlayer
+                    ahead_player["avg_score"] = otherPlayer_avg_score
+                    ahead_player["github_avatar"] = players_data[otherPlayer]["github_avatar"]
             elif otherPlayer_avg_score < player_score:
-                if relative_leaderboard["behind"] is None or otherPlayer_avg_score > players_data[relative_leaderboard["behind"]]["avg_score"]:
-                    relative_leaderboard["behind"]["player_name"] = otherPlayer
-                    relative_leaderboard["behind"]["avg_score"] = otherPlayer_avg_score
-                    relative_leaderboard["behind"]["github_avatar"] = players_data[otherPlayer]["github_avatar"]
+                if behind_player is None or otherPlayer_avg_score > players_data[relative_leaderboard["behind"]]["avg_score"]:
+                    behind_player["player_name"] = otherPlayer
+                    behind_player["avg_score"] = otherPlayer_avg_score
+                    behind_player["github_avatar"] = players_data[otherPlayer]["github_avatar"]
             
     return relative_leaderboard
 
@@ -299,8 +344,8 @@ def get_players_metrics(players_data: dict):
     player_metrics = {}
     for name, data in players_data.items():
         player_metrics[name] = {
-            "score": data["score"],
-            "avg_score": get_player_avg_score(players_data, name),
+            "score": int(round(data["score"])),
+            "avg_score": int(round(get_player_avg_score(players_data, name))),
             "correct_questions": data["correct_questions"],
             "incorrect_questions": data["incorrect_questions"],
             "remaining_questions": data["remaining_questions"],
@@ -310,7 +355,7 @@ def get_players_metrics(players_data: dict):
 
 
 def validate_answer(answer, question_options):
-    if answer is None or answer == "":
+    if answer is None or answer == '' or answer.isspace():
         return None
     # Get the casing of the answer:
     keys = question_options.keys()
