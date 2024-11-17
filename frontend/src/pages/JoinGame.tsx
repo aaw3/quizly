@@ -66,7 +66,7 @@ const JoinGame = () => {
   }, []);
 
   return (
-    <section className="relative bg-gradient-to-b bg-white min-h-screen pb-96">
+    <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen pb-96">
       <Header />
       <div className="container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-4xl">
         {!waiting ? (
@@ -116,8 +116,13 @@ const JoinGame = () => {
                   <span className="font-mono text-blue-600">{localGameCode}</span>
                 </p>
                 <p className="text-lg text-gray-700">
-                  Waiting for the game to start...
+                Hang tight! The host will start the game soon.
                 </p>
+                <div className="flex items-center justify-center space-x-2 pb-4">
+                  <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
+                  <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce delay-2000"></div>
+                  <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce delay-3000"></div>
+                </div>
               </div>
             </div>
           </>
