@@ -18,7 +18,9 @@ const JoinGame = () => {
     try {
       // API Call to join game
       const response = await axios.post(
-        `${import.meta.env.VITE_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/api/joingame/${localGameCode}?player_name=${localPlayerName}`
+        `${import.meta.env.VITE_PROTOCOL}://${import.meta.env.VITE_HOST}:${
+          import.meta.env.VITE_PORT
+        }/api/joingame/${localGameCode}?player_name=${localPlayerName}`
       );
 
       // Update context with game data
@@ -28,7 +30,9 @@ const JoinGame = () => {
 
       // Establish WebSocket connection
       const socket = new WebSocket(
-        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/game/${localGameCode}/${localPlayerName}`
+        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${
+          import.meta.env.VITE_PORT
+        }/ws/game/${localGameCode}/${localPlayerName}`
       );
 
       socket.onopen = () => {
@@ -131,13 +135,18 @@ const JoinGame = () => {
                 <p className="text-lg text-gray-700">
                   Hang tight! The host will start the game soon.
                 </p>
+                <p className="text-lg text-gray-700 font-bold">How it works:</p>
+                <p className="text-lg text-gray-700">
+                  Answer questions, and if you get one wrong, AI provides help
+                  and gives you 50% credit for learning from it.
+                </p>
                 <div className="flex items-center justify-center space-x-2 py-4">
                   <div
-                    className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
+                    className="w-3 h-3 bg-purple-700 rounded-full animate-bounce"
                     style={{ animationDelay: "0s" }}
                   ></div>
                   <div
-                    className="w-3 h-3 bg-purple-600 rounded-full animate-bounce"
+                    className="w-3 h-3 bg-purple-700 rounded-full animate-bounce"
                     style={{ animationDelay: "0.2s" }}
                   ></div>
                   <div
@@ -145,12 +154,6 @@ const JoinGame = () => {
                     style={{ animationDelay: "0.4s" }}
                   ></div>
                 </div>
-                <p className="text-lg text-gray-700 font-bold">
-                  How it works:
-                </p>
-                <p className="text-lg text-gray-700">
-                Answer questions, and if you get one wrong, AI provides help and gives you 50% credit for learning from it.
-                </p>
               </div>
             </div>
           </>
