@@ -221,6 +221,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                                 break
 
                         if ranOutOfTime:
+                            points = 0
                             break
                         # First answer
                         if check_answer(correctAnswer, user_answer):
