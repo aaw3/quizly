@@ -1,6 +1,9 @@
+from dotenv import load_dotenv
 from groq import Groq
 import os
-from dotenv import load_dotenv
+import uuid
+
+
 load_dotenv()
 
 api_key = os.getenv("GROQ_API_KEY")
@@ -28,3 +31,39 @@ def get_ai_help(answerCorrect: str, answerIncorrect: str, question: str) -> str:
 
 
     return chat_completion.choices[0].message.content
+
+def generate_questions(prompt: str) -> str:
+    """
+    Generate a new set of questions based on a prompt and save to a YAML file.
+
+    Args:
+        prompt (str): The input prompt for the AI to generate questions.
+
+    Returns:
+        str: A filepath (quizes/questions_uuid()) for the new set of questions.
+    """
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Generate a set of multiple-choice questions based on the following prompt. "
+                               f"Provide each question with options A, B, C, D, and answer. "
+                               f"Output should be in YAML format.\n\nPrompt: {prompt}"
+                }
+            ],
+            model="llama3-8b-8192",
+            max_tokens=1000,
+            stream=False
+        )
+
+        questions_yaml = chat_completion.choices[0].message.content
+        output_file = os.path.join("quizzes", f"questions_{uuid.uuid4()}.yaml")
+
+        with open(output_file, "w") as file:
+            file.write(questions_yaml)
+
+        return output_file
+
+    except Exception as e:
+        print(f"Error: {e}")
