@@ -19,7 +19,7 @@ const GameNotFound = () => {
             to="/joingame"
             className="w-full px-6 py-4 text-lg font-medium rounded-lg bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition duration-200"
           >
-            Join Game
+            Try Again
           </Link>
           <Link
             to="/"
