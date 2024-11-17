@@ -132,6 +132,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
 
         # Must be global
         ranOutOfTime = False
+        waitingAfterQuestion = False
         try:
             while True:
                 game_data = get_game_data(client, game_code)
@@ -160,7 +161,11 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                     response = {"out_of_time": {"answer": f"{correctAnswer}. {question["options"][correctAnswer]}"}}
                     await websocket.send_text(json.dumps(response))
                     await websocket.receive_text()
+                    waitingAfterQuestion = False
                     ranOutOfTime = False
+                elif waitingAfterQuestion:
+                    # Wait for user for next question
+                    await websocket.receive_text()
 
                     
                 
@@ -270,6 +275,7 @@ async def manage_game_session(websocket: WebSocket, client: Redis, game_code: st
                     players_data[player_name]["question_attempt"] = 0
                     players_data[player_name]["question_start_time"] = None
                     save_players_data(client, game_code, players_data)
+                    waitingAfterQuestion = True
 
                     # Send score metrics to player
                     relative_leaderboard = get_relative_leaderboard(players_data, player_name)
