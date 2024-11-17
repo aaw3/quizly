@@ -83,11 +83,6 @@ const LearningCards = () => {
             </div>
 
             {/* Footer CTA */}
-            <div className="text-center mt-6">
-              <button className="text-sm font-semibold bg-white text-blue-600 px-4 py-2 rounded-lg shadow-md hover:bg-gray-100 transition duration-200">
-                Explore More
-              </button>
-            </div>
           </div>
         ))}
       </div>
