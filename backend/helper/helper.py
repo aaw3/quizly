@@ -347,9 +347,9 @@ def get_relative_leaderboard(players_data: dict, player_name: str):
     for otherPlayer in players_data.keys():
         if otherPlayer != player_name:
             otherPlayer_avg_score = get_player_avg_score(players_data, otherPlayer)
+            ahead_player = relative_leaderboard["ahead"]
+            behind_player = relative_leaderboard["behind"]
             if otherPlayer_avg_score > player_avg_score:
-                ahead_player = relative_leaderboard["ahead"]
-                behind_player = relative_leaderboard["behind"]
                 if ahead_player is None or otherPlayer_avg_score < players_data[relative_leaderboard["ahead"]]["avg_score"]:
                     ahead_player["player_name"] = otherPlayer
                     ahead_player["avg_score"] = otherPlayer_avg_score
