@@ -6,6 +6,7 @@ import CreateGame from "./pages/CreateGame";
 import GamePlay from "./pages/GamePlay";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GameNotFound from "./pages/GameNotFound";
+import About from "./pages/About";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
             }
           />
           <Route path="/gamenotfound" element={<GameNotFound />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </Router>
     </GameProvider>

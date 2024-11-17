@@ -29,7 +29,7 @@ const Header: React.FC = () => {
         {/* Navigation Links */}
         <div className="hidden sm:flex items-center space-x-6">
           <Link
-            to="/"
+            to="/about"
             className="text-base hover:underline underline-offset-4 transition duration-200"
           >
             About
