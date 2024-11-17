@@ -17,6 +17,7 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "http://localhost:5173" # This one is essential
+    "http://quizly.aaw3.dev", # Add hosted server
 ]
 
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
