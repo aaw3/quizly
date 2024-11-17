@@ -18,7 +18,7 @@ const JoinGame = () => {
     try {
       // API Call to join game
       const response = await axios.post(
-        `http://${import.meta.env.HOST}:${import.meta.env.PORT}/api/joingame/${localGameCode}?player_name=${localPlayerName}`
+        `${import.meta.env.VITE_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/api/joingame/${localGameCode}?player_name=${localPlayerName}`
       );
 
       // Update context with game data
@@ -28,7 +28,7 @@ const JoinGame = () => {
 
       // Establish WebSocket connection
       const socket = new WebSocket(
-        `ws://${import.meta.env.HOST}:${import.meta.env.PORT}/ws/game/${localGameCode}/${localPlayerName}`
+        `ws://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/game/${localGameCode}/${localPlayerName}`
       );
 
       socket.onopen = () => {

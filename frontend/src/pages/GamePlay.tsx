@@ -21,7 +21,7 @@ const GamePlay = () => {
     if (!gameCode || !playerName) return;
 
     const ws = new WebSocket(
-      `ws://${import.meta.env.HOST}:${import.meta.env.PORT}/ws/game/${gameCode}/${playerName}`
+      `ws://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/game/${gameCode}/${playerName}`
     );
 
     ws.onopen = () => {
