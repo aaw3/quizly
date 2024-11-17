@@ -9,7 +9,7 @@ const LearningCards = () => {
   const cards = [
     {
       title: "AI-Driven Learning",
-      icon: <FaBookmark size={32} className="text-black" />,
+      icon: <FaBookmark size={32} className="text-blue-600" />,
       bgColor: "bg-blue-600",
       textColor: "text-white",
       content: (
@@ -21,7 +21,7 @@ const LearningCards = () => {
     },
     {
       title: "Study Smarter",
-      icon: <FaClipboardList size={32} className="text-black" />,
+      icon: <FaClipboardList size={32} className="text-blue-600" />,
       bgColor: "bg-violet-600",
       textColor: "text-white",
       content: (
@@ -33,7 +33,7 @@ const LearningCards = () => {
     },
     {
       title: "AI-Generated Questions",
-      icon: <FaFile size={32} className="text-black" />,
+      icon: <FaFile size={32} className="text-blue-600" />,
       bgColor: "bg-blue-500",
       textColor: "text-white",
       content: (
@@ -45,7 +45,7 @@ const LearningCards = () => {
     },
     {
       title: "Track Your Progress",
-      icon: <FaChartBar size={32} className="text-black" />,
+      icon: <FaChartBar size={32} className="text-blue-600" />,
       bgColor: "bg-violet-500",
       textColor: "text-white",
       content: (
@@ -63,7 +63,7 @@ const LearningCards = () => {
         {cards.map((card, index) => (
           <div
             key={index}
-            className={`rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-transform duration-300 p-6 max-w-[320px] min-h-[350px] flex flex-col justify-between ${
+            className={`rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-transform duration-300 p-6 max-w-[320px] min-h-[300px] flex flex-col justify-between ${
               card.bgColor
             } ${card.textColor || "text-gray-900"}`}
           >
