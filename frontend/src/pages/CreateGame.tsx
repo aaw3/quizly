@@ -29,7 +29,7 @@ const CreateGame = () => {
   const [copied, setCopied] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
-  const [gameEnded, setGameEnded] = useState<boolean>(true);
+  const [gameEnded, setGameEnded] = useState<boolean>(false);
 
   const createGame = async () => {
     setLoading(true);
@@ -60,7 +60,7 @@ const CreateGame = () => {
   useEffect(() => {
     if (gameCode) {
       const newSocket = new WebSocket(
-        `ws://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws/host/${gameCode}`
+        `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/${import.meta.env.VITE_WS_PROTOCOL}/host/${gameCode}`
       );
 
       newSocket.onopen = () => {
