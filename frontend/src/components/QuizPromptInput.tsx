@@ -1,6 +1,15 @@
 import { useState } from "react";
+import axios from "axios";
 
-const QuizPromptInput = () => {
+interface QuizPromptInputProps {
+  setGameCode: (value: string) => void;
+  setQuizMade: (value: boolean) => void;
+}
+
+const QuizPromptInput: React.FC<QuizPromptInputProps> = ({
+  setQuizMade,
+  setGameCode,
+}) => {
   const [prompt, setPrompt] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const maxChars = 100;
@@ -11,36 +20,58 @@ const QuizPromptInput = () => {
     }
   };
 
+  const createGame = async (prompt: string) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_PROTOCOL}://${import.meta.env.VITE_HOST}:${
+          import.meta.env.VITE_PORT
+        }/api/creategame?user_prompt=${prompt}`
+      );
+      const data = response.data;
+
+      if (data.game_code) {
+        setGameCode(data.game_code); // Set the game code
+      } else {
+        console.error(data.message || "Error creating game");
+      }
+    } catch (error) {
+      console.error("Failed to create game:", error);
+    }
+  };
+
   const handleSubmit = () => {
     if (prompt.trim().length > 0) {
       if (prompt.trim().length < 15) {
-        setError("Message is too short. Must be atleast 15 characters.");
+        setError("Message is too short. Must be at least 15 characters.");
         setTimeout(() => {
           setError(null);
         }, 2000);
       } else {
-        // Replace with your logic to send the prompt to the AI
+        createGame(prompt);
         console.log("Submitting prompt:", prompt);
         setPrompt(""); // Clear the prompt after submission
+
+        // Update the quizMade state
+        setQuizMade(true);
       }
     }
   };
 
   return (
     <section className="relative bg-gradient-to-b from-violet-50 to-gray-50 min-h-screen pb-32">
-      <div className="container mx-auto flex flex-col items-center px-4 text-center md:px-10 lg:px-32 xl:max-w-4xl">
+      <div className="container mx-auto flex flex-col items-center px-4 text-center md:px-10 lg:px-32 max-w-5xl">
         {/* Title */}
         <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
           Generate a <span className="text-violet-600">Quiz</span>
         </h1>
 
         <p className="px-6 mt-6 mb-12 text-lg text-gray-700 sm:px-12 lg:px-20">
-          Provide a prompt to let AI craft personalized quizzes and launch a new
-          game.
+          Provide a prompt to let the AI craft a personalized quiz and launch a
+          new game. Specify the number of questions.
         </p>
 
         {/* Input Field */}
-        <div className="w-full max-w-3xl bg-white shadow-lg rounded-xl p-6 relative">
+        <div className="w-full max-w-5xl bg-white shadow-lg rounded-xl p-6 relative">
           <textarea
             value={prompt}
             onChange={handleInputChange}
