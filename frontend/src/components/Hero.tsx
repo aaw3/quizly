@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <section className="relative bg-gradient-to-b from-blue-50 via-gray-100 to-gray-50 ">
+    <section className="relative bg-gradient-to-b from-blue-50 via-gray-100 to-gray-50">
       <div className="container mx-auto flex flex-col items-center px-4 text-center md:py-20 md:px-10 lg:px-32 xl:max-w-4xl">
         {/* Headline */}
         <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
@@ -35,9 +35,9 @@ const Hero = () => {
       </div>
 
       {/* Decorative Background */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none lg:block hidden">
         <svg
-          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-10"
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-10 w-full"
           width="1440"
           height="320"
           viewBox="0 0 1440 320"
