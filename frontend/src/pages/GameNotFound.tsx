@@ -7,11 +7,11 @@ const GameNotFound = () => {
       <Header />
       <div className="container mx-auto flex flex-col items-center px-4 text-center py-20 md:px-10 lg:px-32 xl:max-w-4xl">
         <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl text-gray-800">
-          Game <span className="text-red-600">Not Found</span>
+          Game Not Found
         </h1>
         <p className="px-6 mt-6 mb-12 text-lg text-gray-700 sm:px-12 lg:px-20">
           We couldn’t find the game you’re looking for. Double-check your game
-          code and try again, or create a new game to play with your friends.
+          code and try again, or create a new game.
         </p>
 
         <div className="w-full max-w-md space-x-4">
