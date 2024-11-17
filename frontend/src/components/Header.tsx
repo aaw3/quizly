@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { FaUser } from "react-icons/fa";
 import ContextMenu from "./ContextMenu";
 
 const Header: React.FC = () => {
@@ -41,7 +42,9 @@ const Header: React.FC = () => {
             My Games
           </Link>
           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-            <span className="text-sm font-medium text-gray-700">LS</span>
+            <span className="text-sm font-medium text-gray-700">
+              <FaUser size={20} className="text-grey-500" />
+            </span>
           </div>
         </div>
 
