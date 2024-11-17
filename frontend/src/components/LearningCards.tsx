@@ -1,7 +1,7 @@
 import {
   FaBookmark,
   FaClipboardList,
-  FaStickyNote,
+  FaFile,
   FaChartBar,
 } from "react-icons/fa";
 
@@ -33,7 +33,7 @@ const LearningCards = () => {
     },
     {
       title: "AI-Generated Questions",
-      icon: <FaStickyNote size={32} className="text-black" />,
+      icon: <FaFile size={32} className="text-black" />,
       bgColor: "bg-blue-500",
       textColor: "text-white",
       content: (
@@ -68,7 +68,7 @@ const LearningCards = () => {
             } ${card.textColor || "text-gray-900"}`}
           >
             {/* Icon and Title */}
-            <div className="text-center mb-6">
+            <div className="text-center">
               <div className="mb-4 flex justify-center">
                 <div className="w-14 h-14 flex items-center justify-center bg-white rounded-full shadow-md">
                   {card.icon}
