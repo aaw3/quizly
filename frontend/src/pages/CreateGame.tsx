@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import Header from "../components/Header";
 import { IoCopy } from "react-icons/io5";
 import QuizPromptInput from "../components/QuizPromptInput";
