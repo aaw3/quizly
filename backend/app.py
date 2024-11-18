@@ -11,14 +11,18 @@ import random
 import os
 from yaml import safe_load, YAMLError
 import time
+from dotenv import load_dotenv
 
 app = FastAPI()
 
-origins = [
-    "http://localhost",
-    "http://localhost:5173", # This one is essential
-    "http://quizly.aaw3.dev", # Add hosted server
-]
+load_dotenv()
+CORS_URL = os.getenv("CORS_URL")
+
+
+origins = []
+
+if CORS_URL:
+    origins.append(CORS_URL)
 
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 

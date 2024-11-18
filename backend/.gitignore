@@ -1,3 +1,6 @@
+#Quizzes directory
+quizzes/*
+
 # Python
 __pycache__/
 *.pyc
