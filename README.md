@@ -21,8 +21,10 @@ Welcome to **Quizly**, the ultimate AI-powered quiz platform! 🧠 Challenge you
    git clone https://github.com/liamstamper/quizly.git
    cd quizly
 
-2. **Run with Docker** 🐳
+2. **Add .env files** ⚙️  
+   Check out ``frontend/.env.example`` and ``backend/.env.example``
 
+4. **Run with Docker** 🐳  
    Let Docker do all the heavy lifting for you:
       ```bash
       docker compose build
@@ -31,7 +33,7 @@ Welcome to **Quizly**, the ultimate AI-powered quiz platform! 🧠 Challenge you
       docker compose up
       ```
 
-4. **🎉 You're Ready to Play!**
+6. **🎉 You're Ready to Play!**
    
     Open your browser and head over to:
    
